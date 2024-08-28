@@ -3,7 +3,7 @@
   "displayName": "Sireum",
   "description": "This extension provides integration of various Sireum tools/frameworks. Commit: v0.0.0.",
   "version": "0.0.0",
-  "publisher": "Sireum",
+  "publisher": "sireum",
   "icon": "images/sireum.png",
   "private": true,
   "license": "BSD-2-Clause",
@@ -36,6 +36,7 @@
     "problemMatchers": [
       {
         "name": "sireumProblemMatcher",
+        "owner": "Sireum",
         "fileLocation": "absolute",
         "pattern": "$sireumProblemPattern"
       }

@@ -87,7 +87,7 @@ export class SireumTaskProvider implements vscode.TaskProvider {
           definition,
           vscode.TaskScope.Workspace,
           "hamr sysml tipe",
-          "sireum",
+          SireumTaskProvider.SireumType,
           new vscode.ShellExecution(
             "${env:SIREUM_HOME}${pathSeparator}bin${pathSeparator}sireum${ext} hamr sysml tipe --parseable-messages --sourcepath '${workspaceRoot}'"
           ),
