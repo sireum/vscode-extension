@@ -1,0 +1,424 @@
+{
+  "name": "vscode-extension",
+  "displayName": "Sireum",
+  "description": "This extension provides integration of various Sireum tools/frameworks. Commit: v0.0.0.",
+  "version": "0.0.0",
+  "publisher": "Sireum",
+  "icon": "images/sireum.png",
+  "private": true,
+  "license": "BSD-2-Clause",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sireum/vscode-extension"
+  },
+  "engines": {
+    "vscode": "^1.92.2"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "problemPatterns": [
+      {
+        "name": "sireumProblemPattern",
+        "regexp": "^(.*):(\\d+):(\\d+):(\\d+):(\\d+):\\s+(info|warning|error):\\s+(.*)$",
+        "file": 1,
+        "line": 2,
+        "column": 3,
+        "endLine": 4,
+        "endColumn": 5,
+        "severity": 6,
+        "message": 7
+      }
+    ],
+    "problemMatchers": [
+      {
+        "name": "sireumProblemMatcher",
+        "fileLocation": "absolute",
+        "pattern": "$sireumProblemPattern"
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "Sireum",
+        "when": "shellExecutionSupported"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "General",
+        "properties": {
+          "sireum.home": {
+            "type": "string",
+            "default": "",
+            "description": "Home"
+          }
+        }
+      },
+      {
+        "title": "HAMR CodeGen",
+        "properties": {
+          "sireum.hamr.codegen.target.jvm": {
+            "type": "object",
+            "properties": {
+              "outputDir": {
+                "type": "string",
+                "default": "",
+                "description": "Output Directory"
+              },
+              "basePackageName": {
+                "type": "string",
+                "default": "",
+                "pattern": "[a-zA-Z]+",
+                "description": "Base Package Name"
+              },
+              "runtimeMonitoring": {
+                "type": "boolean",
+                "default": "false",
+                "description": "Enable Runtime Monitoring"
+              }
+            }
+          },
+          "sireum.hamr.codegen.target.macos": {
+            "type": "object",
+            "properties": {
+              "outputDir": {
+                "type": "string",
+                "default": "",
+                "description": "Output Directory"
+              },
+              "basePackageName": {
+                "type": "string",
+                "default": "",
+                "pattern": "[a-zA-Z]+",
+                "description": "Base Package Name"
+              },
+              "runtimeMonitoring": {
+                "type": "boolean",
+                "default": "false",
+                "description": "Enable Runtime Monitoring"
+              },
+              "transpiler": {
+                "type": "object",
+                "properties": {
+                  "excludeSlang": {
+                    "type": "boolean",
+                    "default": "false",
+                    "description": "Exclude Slang Component Implementations"
+                  },
+                  "bitWidth": {
+                    "type": "number",
+                    "default": 32,
+                    "enum": [
+                      8,
+                      16,
+                      32,
+                      64
+                    ],
+                    "description": "Bit Width"
+                  },
+                  "maxSeqSize": {
+                    "type": "number",
+                    "default": 16,
+                    "minimum": 1,
+                    "description": "Max Sequence Size"
+                  },
+                  "maxStringSize": {
+                    "type": "number",
+                    "default": 256,
+                    "minimum": 1,
+                    "description": "Max Sequence Size"
+                  },
+                  "outputDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "C Output Directory"
+                  },
+                  "auxCodeDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Aux Code Directory"
+                  }
+                }
+              }
+            }
+          },
+          "sireum.hamr.codegen.target.linux": {
+            "type": "object",
+            "properties": {
+              "outputDir": {
+                "type": "string",
+                "default": "",
+                "description": "Output Directory"
+              },
+              "basePackageName": {
+                "type": "string",
+                "default": "",
+                "pattern": "[a-zA-Z]+",
+                "description": "Base Package Name"
+              },
+              "runtimeMonitoring": {
+                "type": "boolean",
+                "default": "false",
+                "description": "Enable Runtime Monitoring"
+              },
+              "transpiler": {
+                "type": "object",
+                "properties": {
+                  "excludeSlang": {
+                    "type": "boolean",
+                    "default": "false",
+                    "description": "Exclude Slang Component Implementations"
+                  },
+                  "bitWidth": {
+                    "type": "number",
+                    "default": 32,
+                    "enum": [
+                      8,
+                      16,
+                      32,
+                      64
+                    ],
+                    "description": "Bit Width"
+                  },
+                  "maxSeqSize": {
+                    "type": "number",
+                    "default": 16,
+                    "minimum": 1,
+                    "description": "Max Sequence Size"
+                  },
+                  "maxStringSize": {
+                    "type": "number",
+                    "default": 256,
+                    "minimum": 1,
+                    "description": "Max Sequence Size"
+                  },
+                  "outputDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "C Output Directory"
+                  },
+                  "auxCodeDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Aux Code Directory"
+                  }
+                }
+              }
+            }
+          },
+          "sireum.hamr.codegen.target.cygwin": {
+            "type": "object",
+            "properties": {
+              "outputDir": {
+                "type": "string",
+                "default": "",
+                "description": "Output Directory"
+              },
+              "basePackageName": {
+                "type": "string",
+                "default": "",
+                "pattern": "[a-zA-Z]+",
+                "description": "Base Package Name"
+              },
+              "runtimeMonitoring": {
+                "type": "boolean",
+                "default": "false",
+                "description": "Enable Runtime Monitoring"
+              },
+              "transpiler": {
+                "type": "object",
+                "properties": {
+                  "excludeSlang": {
+                    "type": "boolean",
+                    "default": "false",
+                    "description": "Exclude Slang Component Implementations"
+                  },
+                  "bitWidth": {
+                    "type": "number",
+                    "default": 32,
+                    "enum": [
+                      8,
+                      16,
+                      32,
+                      64
+                    ],
+                    "description": "Bit Width"
+                  },
+                  "maxSeqSize": {
+                    "type": "number",
+                    "default": 16,
+                    "minimum": 1,
+                    "description": "Max Sequence Size"
+                  },
+                  "maxStringSize": {
+                    "type": "number",
+                    "default": 256,
+                    "minimum": 1,
+                    "description": "Max Sequence Size"
+                  },
+                  "outputDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "C Output Directory"
+                  },
+                  "auxCodeDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Aux Code Directory"
+                  }
+                }
+              }
+            }
+          },
+          "sireum.hamr.codegen.target.sel4": {
+            "type": "object",
+            "properties": {
+              "outputDir": {
+                "type": "string",
+                "default": "",
+                "description": "Output Directory"
+              },
+              "basePackageName": {
+                "type": "string",
+                "default": "",
+                "pattern": "[a-zA-Z]+",
+                "description": "Base Package Name"
+              },
+              "runtimeMonitoring": {
+                "type": "boolean",
+                "default": "false",
+                "description": "Enable Runtime Monitoring"
+              },
+              "transpiler": {
+                "type": "object",
+                "properties": {
+                  "excludeSlang": {
+                    "type": "boolean",
+                    "default": "false",
+                    "description": "Exclude Slang Component Implementations"
+                  },
+                  "bitWidth": {
+                    "type": "number",
+                    "default": 32,
+                    "enum": [
+                      8,
+                      16,
+                      32,
+                      64
+                    ],
+                    "description": "Bit Width"
+                  },
+                  "maxSeqSize": {
+                    "type": "number",
+                    "default": 16,
+                    "minimum": 1,
+                    "description": "Max Sequence Size"
+                  },
+                  "maxStringSize": {
+                    "type": "number",
+                    "default": 256,
+                    "minimum": 1,
+                    "description": "Max Sequence Size"
+                  },
+                  "outputDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "C Output Directory"
+                  },
+                  "auxCodeDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Aux Code Directory"
+                  }
+                }
+              },
+              "CAmkES": {
+                "type": "object",
+                "properties": {
+                  "outputDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "seL4/CAmkES Output Directory"
+                  },
+                  "auxCodeDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Aux Code Directory for CAmkES"
+                  }
+                }
+              }
+            }
+          },
+          "sireum.hamr.codegen.target.sel4_Only": {
+            "type": "object",
+            "properties": {
+              "runtimeMonitoring": {
+                "type": "boolean",
+                "default": "false",
+                "description": "Enable Runtime Monitoring"
+              },
+              "CAmkES": {
+                "type": "object",
+                "properties": {
+                  "outputDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "seL4/CAmkES Output Directory"
+                  },
+                  "auxCodeDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Aux Code Directory for CAmkES"
+                  }
+                }
+              }
+            }
+          },
+          "sireum.hamr.codegen.target.sel4_TB": {
+            "type": "object",
+            "properties": {
+              "runtimeMonitoring": {
+                "type": "boolean",
+                "default": "false",
+                "description": "Enable Runtime Monitoring"
+              },
+              "CAmkES": {
+                "type": "object",
+                "properties": {
+                  "outputDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "seL4/CAmkES Output Directory"
+                  },
+                  "auxCodeDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Aux Code Directory for CAmkES"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "prebuild": "npm install",
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "lint": "eslint \"src/**/*.ts\"",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/vscode": "^1.92.0",
+    "@typescript-eslint/eslint-plugin": "^8.2.0",
+    "@typescript-eslint/parser": "^8.2.0",
+    "eslint": "^9.9.1",
+    "typescript": "^5.5.4"
+  }
+}

@@ -1,0 +1,14 @@
+.gitignore
+.idea/**
+.vscode/**
+.vscode-test/**
+*.iml
+bin
+out/vscode-test/**
+out/logika/**
+out/**/*.map
+readme-dev.md
+src/**
+tsconfig.json
+tslint.json
+vscode-test
