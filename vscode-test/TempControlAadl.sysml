@@ -4,67 +4,63 @@ package TempControlAadl {
     import AADL_Project::*;
     import AADL_Project::Time_Units::*;
 
-	language "GUMBO" /*{
-	  library
+  language "GUMBO" /*{
+    library
         functions
-          def inRange(temp: Temperature): AADL_Base_Types::Boolean :=
-            temp.degrees >= f32(-50.0) and temp.degrees <= f32(150.0);
+          def inRange(temp: Temperature): Base_Types::Boolean :=
+            temp.degrees >= f32(-50.0) & temp.degrees <= f32(150.0);
         }*/
 
-	part def TempControlSystem :> System {
-		// subcomponents
-		part tcp : TempControlProcess;
-	}
-	
-	part def TempControlProcess :> Process {
-		// subcomponents
-		part tempSensor : TempSensor;
-		part tempControl : TempControl;
-		part fan : Fan;
-		part opInterface : OperatorInterface;
-		
-		// connections
-		connection ctTStoTC : PortConnection connect tempSensor.currentTemp to tempControl.currentTemp;
-		connection ctTStoOI : PortConnection connect tempSensor.currentTemp to opInterface.currentTemp;
-		connection fcTCtoF : PortConnection connect tempControl.fanCmd to fan.fanCmd;
-		connection faFtoTC : PortConnection connect fan.fanAck to tempControl.fanAck;
-		connection spOItoTC : PortConnection connect opInterface.setPoint to tempControl.setPoint;
-	}
-	
-	// TempSensor Thread
-	part def TempSensor :> Thread {
-		// features
-		out port currentTemp : DataPort { out :> type : Temperature; }
-	
-		attribute :>> Dispatch_Protocol = Periodic;
-		attribute :>> Period = 1000 [ms];
+  part def TempControlSystem :> System {
+    // subcomponents
+    part tcp : TempControlProcess;
+  }
+  
+  part def TempControlProcess :> Process {
+    // subcomponents
+    part tempSensor : TempSensor;
+    part tempControl : TempControl;
+    part fan : Fan;
+    part opInterface : OperatorInterface;
+    
+    // connections
+    connection ctTStoTC : PortConnection connect tempSensor.currentTemp to tempControl.currentTemp;
+    connection ctTStoOI : PortConnection connect tempSensor.currentTemp to opInterface.currentTemp;
+    connection fcTCtoF : PortConnection connect tempControl.fanCmd to fan.fanCmd;
+    connection faFtoTC : PortConnection connect fan.fanAck to tempControl.fanAck;
+    connection spOItoTC : PortConnection connect opInterface.setPoint to tempControl.setPoint;
+  }
+  
+  // TempSensor Thread
+  part def TempSensor :> Thread {
+    // features
+    out port currentTemp : DataPort { :> type : Temperature; }
+  
+    attribute :>> Dispatch_Protocol = Supported_Dispatch_Protocols::Periodic;
+    attribute :>> Period = 1000 [millisecond];
 
-		language "GUMBO" /*{
+    language "GUMBO" /*{
           integration
             guarantee Sensor_Temperature_Range:
-              inRange(currentTemp);
+              TempControlAadl::GUMBO__Library::inRange(currentTemp);
 
             initialize
               guarantee initializes:
                 currentTemp.degrees == f32(72.0);
-		}*/
-	}
+    }*/
+  }
 
-	part def TempControl :> Thread {
-		// features
-		in port currentTemp : DataPort { in :> type : Temperature; }
-		in port fanAck : DataPort { in :> type : FanAck; }
-		in port setPoint : DataPort { in :> type : SetPoint; }
-		out port fanCmd : DataPort { out :> type : FanCmd; }
+  part def TempControl :> Thread {
+    // features
+    in port currentTemp : DataPort { in :> type : Temperature; }
+    in port fanAck : DataPort { in :> type : FanAck; }
+    in port setPoint : DataPort { in :> type : SetPoint; }
+    out port fanCmd : DataPort { out :> type : FanCmd; }
 
-		attribute :>> Dispatch_Protocol = Sporadic;
-		attribute :>> Period = 1000 [ms];
-		
-		//@Properties {
-		//	Dispatch_Protocol = Sporadic;
-		//	Period = 1000;
-		//}
-		language "GUMBO" /*{
+    attribute :>> Dispatch_Protocol = Supported_Dispatch_Protocols::Periodic;
+    attribute :>> Period = 1000 [millisecond];
+
+    language "GUMBO" /*{
 
           state
             latestFanCmd: FanCmd;
@@ -124,84 +120,79 @@ package TempControlAadl {
                   (latestFanCmd == In(latestFanCmd)) &
                   (fanCmd == latestFanCmd);
 
-		}*/
-	}
+    }*/
+  }
 
-	part def Fan :> Thread {
-		// features
-		in port fanCmd : EventDataPort { in :> type : FanCmd; }
-		out port fanAck : EventDataPort { out :> type : FanAck; }
-		
-		attribute :>> Dispatch_Protocol = Sporadic;
-		attribute :>> Period = 1000 [ms];
-		
-		//@Properties {
-		//	Dispatch_Protocol = Sporadic;
-		//	Period = 1000;
-		//}
-	}
+  part def Fan :> Thread {
+    // features
+    in port fanCmd : EventDataPort { in :> type : FanCmd; }
+    out port fanAck : EventDataPort { out :> type : FanAck; }
+    
+    attribute :>> Dispatch_Protocol = Supported_Dispatch_Protocols::Periodic;
+    attribute :>> Period = 1000 [millisecond];
+    
+    //@Properties {
+    //	Dispatch_Protocol = Sporadic;
+    //	Period = 1000;
+    //}
+  }
 
-	part def OperatorInterface :> Thread {
-		// features
-		in port currentTemp : DataPort { in :> type : Temperature; }
-		out port setPoint : EventDataPort { out :> type : SetPoint; }
-	
-		attribute :>> Dispatch_Protocol = Periodic;
-	    attribute :>> Period = 1000 [ms];
-	    
-		//@Properties {
-		//	Dispatch_Protocol = Periodic;
-		//	Period = 1000;
-		//}
-	}
+  part def OperatorInterface :> Thread {
+    // features
+    in port currentTemp : DataPort { in :> type : Temperature; }
+    out port setPoint : EventDataPort { out :> type : SetPoint; }
+  
+    attribute :>> Dispatch_Protocol = Supported_Dispatch_Protocols::Periodic;
+      attribute :>> Period = 1000 [millisecond];
+      
+    //@Properties {
+    //	Dispatch_Protocol = Periodic;
+    //	Period = 1000;
+    //}
+  }
 
-	// Data Types
-	part def Temperature :> Data {
-	    // The following two should not type check as attributes must
-	    // be typed by attribute definitions and parts must be typed
-	    // by part definitions
-		//attribute degrees : AADL_Base_Types::Float_32;
-   		//part unit : TempUnit;
+  // Data Types
+  part def Temperature :> Data {
 
-   		part degrees : AADL_Base_Types::Float_32;
-		attribute unit : TempUnit;
+       part degrees : Base_Types::Float_32;
+    attribute unit : TempUnit;
 
-		language "GUMBO" /*{
+    language "GUMBO" /*{
           // data invariant
           // data invariants are assumed whenever value of the datatype is consumed
           //                  and must be proved whenever a value of the data type is constructed
           invariants
             inv AbsZero:
-              degrees >= GUMBO_Definitions::absoluteZero();
-		}*/
-	}
-	
-	part def SetPoint :> Data {
-		part low : Temperature;
-		part high : Temperature;
+              degrees >= GUMBO_Definitions::GUMBO__Library::absoluteZero();
+    }*/
+  }
+  
+  part def SetPoint :> Data {
+    part low : Temperature;
+    part high : Temperature;
 
-		language "GUMBO" /*{
+    language "GUMBO" /*{
           invariants
             inv SetPoint_Data_Invariant:
               (low.degrees >= f32(50.0)) &
               (high.degrees <= f32(110.0)) &
               (low.degrees <= high.degrees);
-		}*/
-	}
-	
-	enum def TempUnit {
-		enum Fahrenheit;
-		enum Celsius;
-		enum Kelvin;
-	}
-	
-	enum def FanCmd {
-		enum On;
-		enum Off;
-	}
-	
-	enum def FanAck {
-		Ok;
-		Error;
-	}
+    }*/
+  }
+  
+  enum def TempUnit {
+    enum Fahrenheit;
+    enum Celsius;
+    enum Kelvin;
+  }
+  
+  enum def FanCmd {
+    enum On;
+    enum Off;
+  }
+  
+  enum def FanAck {
+    Ok;
+    Error;
+  }
 }

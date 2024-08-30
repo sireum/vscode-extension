@@ -1,4 +1,4 @@
-//*standard*/ library package AADL_Base_Types {
+//*standard*/ library package Base_Types {
 
   import AADL::*;
   import SI::*;
