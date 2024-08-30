@@ -42,7 +42,7 @@ package TempControlAadl {
     language "GUMBO" /*{
           integration
             guarantee Sensor_Temperature_Range:
-              TempControlAadl::GUMBO__Library::inRange(currentTemp);
+              currentTemp.degrees >= f32(-50.0) & currentTemp.degrees <= f32(150.0);
 
             initialize
               guarantee initializes:
@@ -154,7 +154,7 @@ package TempControlAadl {
   // Data Types
   part def Temperature :> Data {
 
-       part degrees : Base_Types::Float_32;
+    part degrees : Base_Types::Float_32;
     attribute unit : TempUnit;
 
     language "GUMBO" /*{
