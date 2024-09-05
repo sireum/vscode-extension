@@ -8,7 +8,7 @@ package TempControlAadl {
     library
         functions
           def inRange(temp: Temperature): Base_Types::Boolean :=
-            temp.degrees >= f32(-50.0) & temp.degrees <= f32(150.0);
+            temp.degrees >= -50.0[f32] & temp.degrees <= 150.0[f32];
         }*/
 
   part def TempControlSystem :> System {
@@ -42,11 +42,11 @@ package TempControlAadl {
     language "GUMBO" /*{
           integration
             guarantee Sensor_Temperature_Range:
-              currentTemp.degrees >= f32(-50.0) & currentTemp.degrees <= f32(150.0);
+              currentTemp.degrees >= -50.0[f32] & currentTemp.degrees <= 79.0[f32];
 
             initialize
               guarantee initializes:
-                currentTemp.degrees == f32(72.0);
+                currentTemp.degrees == 72.0[f32];
     }*/
   }
 
@@ -67,7 +67,7 @@ package TempControlAadl {
 
           integration
             assume currentTempRange:
-              (currentTemp.degrees >= f32(-70.0)) & (currentTemp.degrees <= f32(80.0));
+              (currentTemp.degrees >= -70.0[f32]) & (currentTemp.degrees <= 80.0[f32]);
 
           initialize
              modifies (latestFanCmd);
@@ -174,8 +174,8 @@ package TempControlAadl {
     language "GUMBO" /*{
           invariants
             inv SetPoint_Data_Invariant:
-              (low.degrees >= f32(50.0)) &
-              (high.degrees <= f32(110.0)) &
+              (low.degrees >= 50.0[f32]) &
+              (high.degrees <= 110.0[f32]) &
               (low.degrees <= high.degrees);
     }*/
   }

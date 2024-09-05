@@ -3,6 +3,6 @@ package GUMBO_Definitions {
     library
         functions
 
-          def absoluteZero(): Base_Types::Float_32 := f32(-459.67);
+          def absoluteZero(): Base_Types::Float_32 := -459.67[f32];
   }*/
 }
