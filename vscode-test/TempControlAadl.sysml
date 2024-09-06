@@ -1,6 +1,6 @@
-//@ Codegen: --output-dir hamr/slang -n tc
+//@ HAMR: --output-dir hamr/slang -n tc --line 3
 
-// codegen will write out to the workspace root dir if output-dir is not.
+// codegen will write out to the workspace root dir if output-dir is not set.
 // The option can be relative to the workspace (above) or absolute
 
 package TempControlAadl {
@@ -20,7 +20,7 @@ package TempControlAadl {
     // subcomponents
     part tcp : TempControlProcess;
   }
-  
+
   part def TempControlProcess :> Process {
     // subcomponents
     part tempSensor : TempSensor;
