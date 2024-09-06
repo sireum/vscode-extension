@@ -12,3 +12,5 @@ src/**
 tsconfig.json
 tslint.json
 vscode-test
+air.json
+hamr

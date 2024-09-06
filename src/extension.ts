@@ -45,7 +45,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export class SireumTaskProvider implements vscode.TaskProvider {
-  static SireumType = "Sireum";
+  static SireumType = "sireum";
   private tasks: vscode.Task[] | undefined;
 
   constructor(private workspaceRoot: string) {}
@@ -69,22 +69,21 @@ export class SireumTaskProvider implements vscode.TaskProvider {
         ? vscode.workspace.workspaceFolders
         : undefined;
     if (workspaceFolders) {
-      const definition = { type: SireumTaskProvider.SireumType };
       const ext = isWindows ? ".bat" : "";
       const workspaceRoot = workspaceFolders
         .map((f) => f.uri.fsPath)
         .join(isWindows ? ";" : ":");
-      const logikaPO: vscode.TaskPresentationOptions = {
+      const po: vscode.TaskPresentationOptions = {
         echo: true,
         focus: true,
         panel: vscode.TaskPanelKind.Dedicated,
-        clear: true,
+        clear: false,
         showReuseMessage: false,
-        reveal: vscode.TaskRevealKind.Never,
+        reveal: vscode.TaskRevealKind.Always,
       };
       {
         const t = new vscode.Task(
-          definition,
+          { type: SireumTaskProvider.SireumType, name: "hamr sysml tipe" },
           vscode.TaskScope.Workspace,
           "hamr sysml tipe",
           SireumTaskProvider.SireumType,
@@ -93,19 +92,12 @@ export class SireumTaskProvider implements vscode.TaskProvider {
           ),
           ["$sireumProblemMatcher"]
         );
-        t.presentationOptions = {
-          echo: true,
-          focus: false,
-          panel: vscode.TaskPanelKind.Dedicated,
-          clear: true,
-          showReuseMessage: false,
-          reveal: vscode.TaskRevealKind.Never,
-        };
+        t.presentationOptions = po;
         this.tasks!.push(t);
       }
       {
         const t = new vscode.Task(
-          definition,
+          { type: SireumTaskProvider.SireumType, name: "hamr sysml logika line" },
           vscode.TaskScope.Workspace,
           "hamr sysml logika line",
           SireumTaskProvider.SireumType,
@@ -114,12 +106,12 @@ export class SireumTaskProvider implements vscode.TaskProvider {
           ),
           ["$sireumProblemMatcher"]
         );
-        t.presentationOptions = logikaPO;
+        t.presentationOptions = po;
         this.tasks!.push(t);
       }
       {
         const t = new vscode.Task(
-          definition,
+          { type: SireumTaskProvider.SireumType, name: "hamr sysml logika file" },
           vscode.TaskScope.Workspace,
           "hamr sysml logika file",
           SireumTaskProvider.SireumType,
@@ -128,12 +120,12 @@ export class SireumTaskProvider implements vscode.TaskProvider {
           ),
           ["$sireumProblemMatcher"]
         );
-        t.presentationOptions = logikaPO;
+        t.presentationOptions = po;
         this.tasks!.push(t);
       }
       {
         const t = new vscode.Task(
-          definition,
+          { type: SireumTaskProvider.SireumType, name: "hamr sysml logika all" },
           vscode.TaskScope.Workspace,
           "hamr sysml logika all",
           SireumTaskProvider.SireumType,
@@ -142,12 +134,12 @@ export class SireumTaskProvider implements vscode.TaskProvider {
           ),
           ["$sireumProblemMatcher"]
         );
-        t.presentationOptions = logikaPO;
+        t.presentationOptions = po;
         this.tasks!.push(t);
       }
       {
         const t = new vscode.Task(
-          definition,
+          { type: SireumTaskProvider.SireumType, name: "hamr sysml codegen" },
           vscode.TaskScope.Workspace,
           "hamr sysml codegen",
           SireumTaskProvider.SireumType,
@@ -156,14 +148,7 @@ export class SireumTaskProvider implements vscode.TaskProvider {
           ),
           ["$sireumProblemMatcher"]
         );
-        t.presentationOptions = {
-          echo: true,
-          focus: true,
-          panel: vscode.TaskPanelKind.Dedicated,
-          clear: true,
-          showReuseMessage: false,
-          reveal: vscode.TaskRevealKind.Always,
-        };
+        t.presentationOptions = po;
         this.tasks!.push(t);
       }
     }
