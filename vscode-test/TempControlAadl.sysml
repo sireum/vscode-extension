@@ -1,5 +1,10 @@
-package TempControlAadl {
+//@ Codegen: --output-dir hamr/slang -n tc
 
+// codegen will write out to the workspace root dir if output-dir is not.
+// The option can be relative to the workspace (above) or absolute
+
+package TempControlAadl {
+ 
     import AADL::*;
     import AADL_Project::*;
     import AADL_Project::Time_Units::*;
