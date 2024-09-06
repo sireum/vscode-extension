@@ -25,8 +25,16 @@
 import * as vscode from "vscode";
 
 const isWindows = process.platform === "win32";
-const tokenTypes = new Map<string, number>();
-const tokenModifiers = new Map<string, number>();
+const ext = isWindows ? ".bat" : "";
+const sireum = "\"${env:SIREUM_HOME}${pathSeparator}bin${pathSeparator}sireum" + ext + "\" "
+const po: vscode.TaskPresentationOptions = {
+  echo: false,
+  focus: false,
+  panel: vscode.TaskPanelKind.Dedicated,
+  clear: true,
+  showReuseMessage: false,
+  reveal: vscode.TaskRevealKind.Never,
+};
 
 export function activate(context: vscode.ExtensionContext) {
   const workspaceFolders =
@@ -58,6 +66,28 @@ export class SireumTaskProvider implements vscode.TaskProvider {
     return undefined;
   }
 
+  private getTask(kind: string, args: string, focus: boolean): vscode.Task {
+    const t = new vscode.Task(
+      { type: SireumTaskProvider.SireumType, kind: kind },
+      vscode.TaskScope.Workspace,
+      kind,
+      SireumTaskProvider.SireumType,
+      new vscode.ShellExecution(
+        sireum + args
+      ),
+      ["$sireumProblemMatcher"]
+    );
+    t.presentationOptions = {
+      echo: false,
+      focus: focus,
+      panel: vscode.TaskPanelKind.Dedicated,
+      clear: true,
+      showReuseMessage: false,
+      reveal: focus? vscode.TaskRevealKind.Always : vscode.TaskRevealKind.Never,
+    };
+    return t;
+  }
+
   private getTasks(): vscode.Task[] {
     if (this.tasks !== undefined) {
       return this.tasks;
@@ -69,88 +99,14 @@ export class SireumTaskProvider implements vscode.TaskProvider {
         ? vscode.workspace.workspaceFolders
         : undefined;
     if (workspaceFolders) {
-      const ext = isWindows ? ".bat" : "";
       const workspaceRoot = workspaceFolders
         .map((f) => f.uri.fsPath)
         .join(isWindows ? ";" : ":");
-      const po: vscode.TaskPresentationOptions = {
-        echo: true,
-        focus: true,
-        panel: vscode.TaskPanelKind.Dedicated,
-        clear: false,
-        showReuseMessage: false,
-        reveal: vscode.TaskRevealKind.Always,
-      };
-      {
-        const t = new vscode.Task(
-          { type: SireumTaskProvider.SireumType, name: "hamr sysml tipe" },
-          vscode.TaskScope.Workspace,
-          "hamr sysml tipe",
-          SireumTaskProvider.SireumType,
-          new vscode.ShellExecution(
-            "\"${env:SIREUM_HOME}${pathSeparator}bin${pathSeparator}sireum" + ext + "\" hamr sysml tipe --parseable-messages --sourcepath \"${workspaceRoot}\""
-          ),
-          ["$sireumProblemMatcher"]
-        );
-        t.presentationOptions = po;
-        this.tasks!.push(t);
-      }
-      {
-        const t = new vscode.Task(
-          { type: SireumTaskProvider.SireumType, name: "hamr sysml logika line" },
-          vscode.TaskScope.Workspace,
-          "hamr sysml logika line",
-          SireumTaskProvider.SireumType,
-          new vscode.ShellExecution(
-            "\"${env:SIREUM_HOME}${pathSeparator}bin${pathSeparator}sireum" + ext + "\" hamr sysml logika --parseable-messages --sourcepath \"${workspaceRoot}\" --line ${lineNumber} \"${file}\""
-          ),
-          ["$sireumProblemMatcher"]
-        );
-        t.presentationOptions = po;
-        this.tasks!.push(t);
-      }
-      {
-        const t = new vscode.Task(
-          { type: SireumTaskProvider.SireumType, name: "hamr sysml logika file" },
-          vscode.TaskScope.Workspace,
-          "hamr sysml logika file",
-          SireumTaskProvider.SireumType,
-          new vscode.ShellExecution(
-            "\"${env:SIREUM_HOME}${pathSeparator}bin${pathSeparator}sireum" + ext + "\" hamr sysml logika --parseable-messages --sourcepath \"${workspaceRoot}\" \"${file}\""
-          ),
-          ["$sireumProblemMatcher"]
-        );
-        t.presentationOptions = po;
-        this.tasks!.push(t);
-      }
-      {
-        const t = new vscode.Task(
-          { type: SireumTaskProvider.SireumType, name: "hamr sysml logika all" },
-          vscode.TaskScope.Workspace,
-          "hamr sysml logika all",
-          SireumTaskProvider.SireumType,
-          new vscode.ShellExecution(
-            "\"${env:SIREUM_HOME}${pathSeparator}bin${pathSeparator}sireum" + ext + "\" hamr sysml logika --parseable-messages --sourcepath \"${workspaceRoot}\""
-          ),
-          ["$sireumProblemMatcher"]
-        );
-        t.presentationOptions = po;
-        this.tasks!.push(t);
-      }
-      {
-        const t = new vscode.Task(
-          { type: SireumTaskProvider.SireumType, name: "hamr sysml codegen" },
-          vscode.TaskScope.Workspace,
-          "hamr sysml codegen",
-          SireumTaskProvider.SireumType,
-          new vscode.ShellExecution(
-            "\"${env:SIREUM_HOME}${pathSeparator}bin${pathSeparator}sireum" + ext + "\" hamr sysml codegen --parseable-messages --sourcepath \"${workspaceRoot}\" --line ${lineNumber} \"${file}\""
-          ),
-          ["$sireumProblemMatcher"]
-        );
-        t.presentationOptions = po;
-        this.tasks!.push(t);
-      }
+      this.tasks!.push(this.getTask("hamr sysml tipe", "hamr sysml tipe --parseable-messages --sourcepath \"${workspaceRoot}\"", false));
+      this.tasks!.push(this.getTask("hamr sysml codegen", "hamr sysml codegen --parseable-messages --sourcepath \"${workspaceRoot}\" --line ${lineNumber} \"${file}\"", true));
+      this.tasks!.push(this.getTask("hamr sysml logika line", "hamr sysml logika --parseable-messages --sourcepath \"${workspaceRoot}\" --line ${lineNumber} \"${file}\"", false));
+      this.tasks!.push(this.getTask("hamr sysml logika file", "hamr sysml logika --parseable-messages --sourcepath \"${workspaceRoot}\" \"${file}\"", false));
+      this.tasks!.push(this.getTask("hamr sysml logika all", "hamr sysml logika --parseable-messages --sourcepath \"${workspaceRoot}\"", false));
     }
     return this.tasks;
   }
