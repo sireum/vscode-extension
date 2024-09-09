@@ -59,7 +59,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
     return pick;
   });
-  vscode.commands.registerCommand("org.sireum.hamr.codegen.getSettings", () => {    
+  vscode.commands.registerCommand("org.sireum.hamr.codegen.getTargetProperties", () => {    
     const content = JSON.stringify({
       "org.sireum.hamr.codegen.target.jvm": vscode.workspace.getConfiguration("org.sireum.hamr.codegen.target.jvm"),
       "org.sireum.hamr.codegen.target.macos": vscode.workspace.getConfiguration("org.sireum.hamr.codegen.target.macos"),
@@ -69,10 +69,8 @@ export function activate(context: vscode.ExtensionContext) {
       "org.sireum.hamr.codegen.target.sel4_only": vscode.workspace.getConfiguration("org.sireum.hamr.codegen.target.sel4_only"),
       "org.sireum.hamr.codegen.target.sel4_tb": vscode.workspace.getConfiguration("org.sireum.hamr.codegen.target.sel4_tb")
     });
-    const tmp = require("tmp");
-    const fs = require('fs');
-    const path = tmp.fileSync().name;
-    fs.writeFileSync(path, deflater.deflate(JSON.parse(content)).join("\n"));
+    const path = require("tmp").fileSync().name;
+    require('fs').writeFileSync(path, deflater.deflate(JSON.parse(content)).join("\n"));
     return path;
   });
 }
@@ -132,7 +130,7 @@ export class SireumTaskProvider implements vscode.TaskProvider {
       this.tasks!.push(this.getTask("hamr sysml logika line", "hamr sysml logika --parseable-messages --sourcepath \"${workspaceRoot}\" --line ${lineNumber} \"${file}\"", false));
       this.tasks!.push(this.getTask("hamr sysml logika file", "hamr sysml logika --parseable-messages --sourcepath \"${workspaceRoot}\" \"${file}\"", false));
       this.tasks!.push(this.getTask("hamr sysml logika all", "hamr sysml logika --parseable-messages --sourcepath \"${workspaceRoot}\"", false));
-      this.tasks!.push(this.getTask("hamr sysml config", "hamr sysml config --parseable-messages --target ${command:org.sireum.hamr.codegen.pickTarget} --settings \"${command:org.sireum.hamr.codegen.getSettings}\" \"${file}\"", true));
+      this.tasks!.push(this.getTask("hamr sysml config", "hamr sysml config --parseable-messages --target ${command:org.sireum.hamr.codegen.pickTarget} --properties \"${command:org.sireum.hamr.codegen.getTargetProperties}\" \"${file}\"", true));
     }
     return this.tasks;
   }
