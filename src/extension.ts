@@ -29,14 +29,6 @@ const isWindows = process.platform === "win32";
 const ext = isWindows ? ".bat" : "";
 const sireum =
   '"${env:SIREUM_HOME}${pathSeparator}bin${pathSeparator}sireum' + ext + '" ';
-const po: vscode.TaskPresentationOptions = {
-  echo: false,
-  focus: false,
-  panel: vscode.TaskPanelKind.Dedicated,
-  clear: true,
-  showReuseMessage: false,
-  reveal: vscode.TaskRevealKind.Never,
-};
 
 export function activate(context: vscode.ExtensionContext) {
   const workspaceFolders =
@@ -130,7 +122,7 @@ export class SireumTaskProvider implements vscode.TaskProvider {
       this.tasks!.push(this.getTask("hamr sysml logika line", "hamr sysml logika --parseable-messages --sourcepath \"${workspaceRoot}\" --line ${lineNumber} \"${file}\"", false));
       this.tasks!.push(this.getTask("hamr sysml logika file", "hamr sysml logika --parseable-messages --sourcepath \"${workspaceRoot}\" \"${file}\"", false));
       this.tasks!.push(this.getTask("hamr sysml logika all", "hamr sysml logika --parseable-messages --sourcepath \"${workspaceRoot}\"", false));
-      this.tasks!.push(this.getTask("hamr sysml config", "hamr sysml config --parseable-messages --target ${command:org.sireum.hamr.codegen.pickTarget} --properties \"${command:org.sireum.hamr.codegen.getTargetProperties}\" \"${file}\"", true));
+      this.tasks!.push(this.getTask("hamr sysml config", "hamr sysml config --parseable-messages --target ${command:org.sireum.hamr.codegen.pickTarget} --properties \"${command:org.sireum.hamr.codegen.getTargetProperties}\" \"${file}\"", false));
     }
     return this.tasks;
   }
