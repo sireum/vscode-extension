@@ -45,7 +45,9 @@
       {
         "type": "sireum",
         "when": "shellExecutionSupported",
-        "required": [ "kind" ],
+        "required": [
+          "kind"
+        ],
         "properties": {
           "kind": {
             "type": "string"
@@ -55,19 +57,9 @@
     ],
     "configuration": [
       {
-        "title": "General",
-        "properties": {
-          "sireum.home": {
-            "type": "string",
-            "default": "",
-            "description": "Home"
-          }
-        }
-      },
-      {
         "title": "HAMR CodeGen",
         "properties": {
-          "sireum.hamr.codegen.target.jvm": {
+          "org.sireum.hamr.codegen.target.jvm": {
             "type": "object",
             "properties": {
               "outputDir": {
@@ -88,71 +80,7 @@
               }
             }
           },
-          "sireum.hamr.codegen.target.macos": {
-            "type": "object",
-            "properties": {
-              "outputDir": {
-                "type": "string",
-                "default": "",
-                "description": "Output Directory"
-              },
-              "basePackageName": {
-                "type": "string",
-                "default": "",
-                "pattern": "[a-zA-Z]+",
-                "description": "Base Package Name"
-              },
-              "runtimeMonitoring": {
-                "type": "boolean",
-                "default": "false",
-                "description": "Enable Runtime Monitoring"
-              },
-              "transpiler": {
-                "type": "object",
-                "properties": {
-                  "excludeSlang": {
-                    "type": "boolean",
-                    "default": "false",
-                    "description": "Exclude Slang Component Implementations"
-                  },
-                  "bitWidth": {
-                    "type": "number",
-                    "default": 32,
-                    "enum": [
-                      8,
-                      16,
-                      32,
-                      64
-                    ],
-                    "description": "Bit Width"
-                  },
-                  "maxSeqSize": {
-                    "type": "number",
-                    "default": 16,
-                    "minimum": 1,
-                    "description": "Max Sequence Size"
-                  },
-                  "maxStringSize": {
-                    "type": "number",
-                    "default": 256,
-                    "minimum": 1,
-                    "description": "Max Sequence Size"
-                  },
-                  "outputDir": {
-                    "type": "string",
-                    "default": "",
-                    "description": "C Output Directory"
-                  },
-                  "auxCodeDir": {
-                    "type": "string",
-                    "default": "",
-                    "description": "Aux Code Directory"
-                  }
-                }
-              }
-            }
-          },
-          "sireum.hamr.codegen.target.linux": {
+          "org.sireum.hamr.codegen.target.macos": {
             "type": "object",
             "properties": {
               "outputDir": {
@@ -216,7 +144,7 @@
               }
             }
           },
-          "sireum.hamr.codegen.target.cygwin": {
+          "org.sireum.hamr.codegen.target.linux": {
             "type": "object",
             "properties": {
               "outputDir": {
@@ -280,7 +208,71 @@
               }
             }
           },
-          "sireum.hamr.codegen.target.sel4": {
+          "org.sireum.hamr.codegen.target.cygwin": {
+            "type": "object",
+            "properties": {
+              "outputDir": {
+                "type": "string",
+                "default": "",
+                "description": "Output Directory"
+              },
+              "basePackageName": {
+                "type": "string",
+                "default": "",
+                "pattern": "[a-zA-Z]+",
+                "description": "Base Package Name"
+              },
+              "runtimeMonitoring": {
+                "type": "boolean",
+                "default": "false",
+                "description": "Enable Runtime Monitoring"
+              },
+              "transpiler": {
+                "type": "object",
+                "properties": {
+                  "excludeSlang": {
+                    "type": "boolean",
+                    "default": "false",
+                    "description": "Exclude Slang Component Implementations"
+                  },
+                  "bitWidth": {
+                    "type": "number",
+                    "default": 32,
+                    "enum": [
+                      8,
+                      16,
+                      32,
+                      64
+                    ],
+                    "description": "Bit Width"
+                  },
+                  "maxSeqSize": {
+                    "type": "number",
+                    "default": 16,
+                    "minimum": 1,
+                    "description": "Max Sequence Size"
+                  },
+                  "maxStringSize": {
+                    "type": "number",
+                    "default": 256,
+                    "minimum": 1,
+                    "description": "Max Sequence Size"
+                  },
+                  "outputDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "C Output Directory"
+                  },
+                  "auxCodeDir": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Aux Code Directory"
+                  }
+                }
+              }
+            }
+          },
+          "org.sireum.hamr.codegen.target.sel4": {
             "type": "object",
             "properties": {
               "outputDir": {
@@ -359,7 +351,7 @@
               }
             }
           },
-          "sireum.hamr.codegen.target.sel4_Only": {
+          "org.sireum.hamr.codegen.target.sel4_only": {
             "type": "object",
             "properties": {
               "runtimeMonitoring": {
@@ -384,7 +376,7 @@
               }
             }
           },
-          "sireum.hamr.codegen.target.sel4_TB": {
+          "org.sireum.hamr.codegen.target.sel4_tb": {
             "type": "object",
             "properties": {
               "runtimeMonitoring": {
@@ -426,6 +418,7 @@
     "@typescript-eslint/eslint-plugin": "^8.2.0",
     "@typescript-eslint/parser": "^8.2.0",
     "eslint": "^9.9.1",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "tmp": "^0.2.3"
   }
 }

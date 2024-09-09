@@ -23,10 +23,12 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import * as vscode from "vscode";
+import * as deflater from "./deflater";
 
 const isWindows = process.platform === "win32";
 const ext = isWindows ? ".bat" : "";
-const sireum = "\"${env:SIREUM_HOME}${pathSeparator}bin${pathSeparator}sireum" + ext + "\" "
+const sireum =
+  '"${env:SIREUM_HOME}${pathSeparator}bin${pathSeparator}sireum' + ext + '" ';
 const po: vscode.TaskPresentationOptions = {
   echo: false,
   focus: false,
@@ -50,6 +52,29 @@ export function activate(context: vscode.ExtensionContext) {
       )
     );
   }
+  vscode.commands.registerCommand("org.sireum.hamr.codegen.pickTarget", () => {
+    const pick = vscode.window.showQuickPick(
+      ["JVM", "macOS", "Linux", "Cygwin", "seL4", "seL4_Only", "seL4_TB"],
+      { title: "HAMR CodeGen Target", canPickMany: false }
+    );
+    return pick;
+  });
+  vscode.commands.registerCommand("org.sireum.hamr.codegen.getSettings", () => {    
+    const content = JSON.stringify({
+      "org.sireum.hamr.codegen.target.jvm": vscode.workspace.getConfiguration("org.sireum.hamr.codegen.target.jvm"),
+      "org.sireum.hamr.codegen.target.macos": vscode.workspace.getConfiguration("org.sireum.hamr.codegen.target.macos"),
+      "org.sireum.hamr.codegen.target.linux": vscode.workspace.getConfiguration("org.sireum.hamr.codegen.target.linux"),
+      "org.sireum.hamr.codegen.target.cygwin": vscode.workspace.getConfiguration("org.sireum.hamr.codegen.target.cygwin"),
+      "org.sireum.hamr.codegen.target.sel4": vscode.workspace.getConfiguration("org.sireum.hamr.codegen.target.sel4"),
+      "org.sireum.hamr.codegen.target.sel4_only": vscode.workspace.getConfiguration("org.sireum.hamr.codegen.target.sel4_only"),
+      "org.sireum.hamr.codegen.target.sel4_tb": vscode.workspace.getConfiguration("org.sireum.hamr.codegen.target.sel4_tb")
+    });
+    const tmp = require("tmp");
+    const fs = require('fs');
+    const path = tmp.fileSync().name;
+    fs.writeFileSync(path, deflater.deflate(JSON.parse(content)).join("\n"));
+    return path;
+  });
 }
 
 export class SireumTaskProvider implements vscode.TaskProvider {
@@ -72,9 +97,7 @@ export class SireumTaskProvider implements vscode.TaskProvider {
       vscode.TaskScope.Workspace,
       kind,
       SireumTaskProvider.SireumType,
-      new vscode.ShellExecution(
-        sireum + args
-      ),
+      new vscode.ShellExecution(sireum + args),
       ["$sireumProblemMatcher"]
     );
     t.presentationOptions = {
@@ -83,7 +106,9 @@ export class SireumTaskProvider implements vscode.TaskProvider {
       panel: vscode.TaskPanelKind.Dedicated,
       clear: true,
       showReuseMessage: false,
-      reveal: focus? vscode.TaskRevealKind.Always : vscode.TaskRevealKind.Never,
+      reveal: focus
+        ? vscode.TaskRevealKind.Always
+        : vscode.TaskRevealKind.Never,
     };
     return t;
   }
@@ -107,6 +132,7 @@ export class SireumTaskProvider implements vscode.TaskProvider {
       this.tasks!.push(this.getTask("hamr sysml logika line", "hamr sysml logika --parseable-messages --sourcepath \"${workspaceRoot}\" --line ${lineNumber} \"${file}\"", false));
       this.tasks!.push(this.getTask("hamr sysml logika file", "hamr sysml logika --parseable-messages --sourcepath \"${workspaceRoot}\" \"${file}\"", false));
       this.tasks!.push(this.getTask("hamr sysml logika all", "hamr sysml logika --parseable-messages --sourcepath \"${workspaceRoot}\"", false));
+      this.tasks!.push(this.getTask("hamr sysml config", "hamr sysml config --parseable-messages --target ${command:org.sireum.hamr.codegen.pickTarget} --settings \"${command:org.sireum.hamr.codegen.getSettings}\" \"${file}\"", true));
     }
     return this.tasks;
   }
