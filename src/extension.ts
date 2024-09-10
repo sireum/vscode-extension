@@ -23,7 +23,7 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import * as vscode from "vscode";
-import * as ct from "./commandTask";
+import * as ct from "./command_task";
 
 export function activate(context: vscode.ExtensionContext) {
   const workspaceFolders =
@@ -37,19 +37,20 @@ export function activate(context: vscode.ExtensionContext) {
   const ctMap = new Map<string, ct.Task>();
   ct.tasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
   vscode.tasks.onDidStartTaskProcess((e) =>
-    ctMap.get(e.execution.task.name)?.start(e)
+    ctMap.get(e.execution.task.name)?.start(context, e)
   );
   vscode.tasks.onDidEndTaskProcess((e) =>
-    ctMap.get(e.execution.task.name)?.post(e)
+    ctMap.get(e.execution.task.name)?.post(context, e)
   );
   ct.commands.forEach((c) => {
-    vscode.commands.registerCommand(c.commandId(), () => c.run(workspaceRoots));
+    context.subscriptions.push(
+      vscode.commands.registerCommand(c.commandId(), () =>
+        c.run(context, workspaceRoots)
+      )
+    );
   });
   const taskProvider = new ct.SireumTaskProvider();
   workspaceFolders.forEach((f) =>
-    vscode.tasks.registerTaskProvider(
-      ct.SireumTaskProvider.TYPE,
-      taskProvider
-    )
+    vscode.tasks.registerTaskProvider(ct.SireumTaskProvider.TYPE, taskProvider)
   );
 }
