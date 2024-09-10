@@ -31,7 +31,7 @@ const tmp = require("tmp");
 export const isWindows = process.platform === "win32";
 export const psep = isWindows ? ";" : ":";
 const ext = isWindows ? ".bat" : "";
-const sireum = `"\${env:SIREUM_HOME}\${pathSeparator}bin\${pathSeparator}sireum${ext}" `;
+const sireumScript = `"\${env:SIREUM_HOME}\${pathSeparator}bin\${pathSeparator}sireum${ext}"`;
 const taskLabelPrefix = "hamr sysml";
 const feedbackPlaceHolder = "$feedback";
 const workspaceRootsPlaceHolder = "$workspaceRoots";
@@ -104,7 +104,7 @@ export abstract class Task extends Command<void> {
 class TipeCommandTask extends Task {
   taskLabel = `${taskLabelPrefix} tipe`;
   command = "${command:org.sireum.hamr.sysml.tipe}";
-  cliArgs = `${sireum} hamr sysml tipe --parseable-messages --sourcepath "$workspaceRoots"`;
+  cliArgs = `${sireumScript} hamr sysml tipe --parseable-messages --sourcepath "$workspaceRoots"`;
   focus = false;
   start(e: vscode.TaskProcessStartEvent): void {}
   post(e: vscode.TaskProcessEndEvent): void {}
@@ -113,7 +113,7 @@ class TipeCommandTask extends Task {
 class LogikaAllCommandTask extends Task {
   taskLabel = `${taskLabelPrefix} logika all`;
   command = "${command:org.sireum.hamr.sysml.logika.all}";
-  cliArgs = `${sireum} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}"`;
+  cliArgs = `${sireumScript} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}"`;
   focus = false;
   start(e: vscode.TaskProcessStartEvent): void {}
   post(e: vscode.TaskProcessEndEvent): void {}
@@ -122,7 +122,7 @@ class LogikaAllCommandTask extends Task {
 class LogikaFileCommandTask extends Task {
   taskLabel = `${taskLabelPrefix} logika file`;
   command = "${command:org.sireum.hamr.sysml.logika.file}";
-  cliArgs = `${sireum} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}" "\${file}"`;
+  cliArgs = `${sireumScript} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}" "\${file}"`;
   focus = false;
   start(e: vscode.TaskProcessStartEvent): void {}
   post(e: vscode.TaskProcessEndEvent): void {}
@@ -131,7 +131,7 @@ class LogikaFileCommandTask extends Task {
 class LogikaLineCommandTask extends Task {
   taskLabel = `${taskLabelPrefix} logika line`;
   command = "${command:org.sireum.hamr.sysml.logika.line}";
-  cliArgs = `${sireum} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}" --line \${lineNumber} "\${file}"`;
+  cliArgs = `${sireumScript} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}" --line \${lineNumber} "\${file}"`;
   focus = false;
   start(e: vscode.TaskProcessStartEvent): void {}
   post(e: vscode.TaskProcessEndEvent): void {}
@@ -140,7 +140,7 @@ class LogikaLineCommandTask extends Task {
 class CodeGenCommandTask extends Task {
   taskLabel = `${taskLabelPrefix} codegen`;
   command = "${command:org.sireum.hamr.sysml.codegen}";
-  cliArgs = `${sireum} hamr sysml codegen --parseable-messages --sourcepath "$workspaceRoots" --line \${lineNumber} "\${file}"`;
+  cliArgs = `${sireumScript} hamr sysml codegen --parseable-messages --sourcepath "$workspaceRoots" --line \${lineNumber} "\${file}"`;
   focus = true;
   start(e: vscode.TaskProcessStartEvent): void {}
   post(e: vscode.TaskProcessEndEvent): void {}
@@ -149,7 +149,7 @@ class CodeGenCommandTask extends Task {
 class CodeGenConfigCommandTask extends Task {
   taskLabel = `${taskLabelPrefix} config`;
   command = "${command:org.sireum.hamr.sysml.config}";
-  cliArgs = `${sireum} hamr sysml config --parseable-messages --target ${PickCodeGenTarget.COMMAND} --properties "${GetCodeGenTargetProperties.COMMAND}" "\${file}"`;
+  cliArgs = `${sireumScript} hamr sysml config --parseable-messages --target ${PickCodeGenTarget.COMMAND} --properties "${GetCodeGenTargetProperties.COMMAND}" "\${file}"`;
   focus = false;
   start(e: vscode.TaskProcessStartEvent): void {}
   post(e: vscode.TaskProcessEndEvent): void {}
