@@ -54,7 +54,7 @@ export abstract class Command<T> {
 class PickCodeGenTarget extends Command<string> {
   static COMMAND = "${command:org.sireum.hamr.codegen.pickTarget}";
   command = PickCodeGenTarget.COMMAND;
-  public run(workspaceRoots: string): any {
+  run(workspaceRoots: string): any {
     const pick = vscode.window.showQuickPick(
       ["JVM", "macOS", "Linux", "Cygwin", "seL4", "seL4_Only", "seL4_TB"],
       { title: "HAMR CodeGen Target", canPickMany: false }
@@ -66,7 +66,7 @@ class PickCodeGenTarget extends Command<string> {
 class GetCodeGenTargetProperties extends Command<string> {
   static COMMAND = "${command:org.sireum.hamr.codegen.getTargetProperties}";
   command = GetCodeGenTargetProperties.COMMAND;
-  public run(workspaceRoots: string): any {
+  run(workspaceRoots: string): any {
     const content = JSON.stringify({
       jvm: vscode.workspace.getConfiguration(jvmTargetKey),
       macos: vscode.workspace.getConfiguration(macOSTargetKey),
@@ -101,7 +101,7 @@ export abstract class Task extends Command<void> {
   }
 }
 
-class TipeCommandTask extends Task {
+class TipeTask extends Task {
   taskLabel = `${taskLabelPrefix} tipe`;
   command = "${command:org.sireum.hamr.sysml.tipe}";
   cliArgs = `${sireumScript} hamr sysml tipe --parseable-messages --sourcepath "$workspaceRoots"`;
@@ -110,7 +110,7 @@ class TipeCommandTask extends Task {
   post(e: vscode.TaskProcessEndEvent): void {}
 }
 
-class LogikaAllCommandTask extends Task {
+class LogikaAllTask extends Task {
   taskLabel = `${taskLabelPrefix} logika all`;
   command = "${command:org.sireum.hamr.sysml.logika.all}";
   cliArgs = `${sireumScript} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}"`;
@@ -119,7 +119,7 @@ class LogikaAllCommandTask extends Task {
   post(e: vscode.TaskProcessEndEvent): void {}
 }
 
-class LogikaFileCommandTask extends Task {
+class LogikaFileTask extends Task {
   taskLabel = `${taskLabelPrefix} logika file`;
   command = "${command:org.sireum.hamr.sysml.logika.file}";
   cliArgs = `${sireumScript} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}" "\${file}"`;
@@ -128,7 +128,7 @@ class LogikaFileCommandTask extends Task {
   post(e: vscode.TaskProcessEndEvent): void {}
 }
 
-class LogikaLineCommandTask extends Task {
+class LogikaLineTask extends Task {
   taskLabel = `${taskLabelPrefix} logika line`;
   command = "${command:org.sireum.hamr.sysml.logika.line}";
   cliArgs = `${sireumScript} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}" --line \${lineNumber} "\${file}"`;
@@ -137,7 +137,7 @@ class LogikaLineCommandTask extends Task {
   post(e: vscode.TaskProcessEndEvent): void {}
 }
 
-class CodeGenCommandTask extends Task {
+class CodeGenTask extends Task {
   taskLabel = `${taskLabelPrefix} codegen`;
   command = "${command:org.sireum.hamr.sysml.codegen}";
   cliArgs = `${sireumScript} hamr sysml codegen --parseable-messages --sourcepath "$workspaceRoots" --line \${lineNumber} "\${file}"`;
@@ -146,7 +146,7 @@ class CodeGenCommandTask extends Task {
   post(e: vscode.TaskProcessEndEvent): void {}
 }
 
-class CodeGenConfigCommandTask extends Task {
+class CodeGenConfigTask extends Task {
   taskLabel = `${taskLabelPrefix} config`;
   command = "${command:org.sireum.hamr.sysml.config}";
   cliArgs = `${sireumScript} hamr sysml config --parseable-messages --target ${PickCodeGenTarget.COMMAND} --properties "${GetCodeGenTargetProperties.COMMAND}" "\${file}"`;
@@ -161,10 +161,10 @@ export function getTask(
   focus: boolean
 ): vscode.Task {
   const t = new vscode.Task(
-    { type: SireumTaskProvider.SireumType, kind: kind },
+    { type: SireumTaskProvider.TYPE, kind: kind },
     vscode.TaskScope.Workspace,
     kind,
-    SireumTaskProvider.SireumType,
+    SireumTaskProvider.TYPE,
     new vscode.ShellExecution(args),
     ["$sireumProblemMatcher"]
   );
@@ -180,29 +180,29 @@ export function getTask(
 }
 
 export class SireumTaskProvider implements vscode.TaskProvider {
-  static SireumType = "sireum";
-  private tasks: vscode.Task[] = commandTasks.map((ct) =>
+  static TYPE = "sireum";
+  tasks: vscode.Task[] = tasks.map((ct) =>
     getTask(ct.taskLabel, ct.command, ct.focus)
   );
-  public async provideTasks(): Promise<vscode.Task[]> {
+  async provideTasks(): Promise<vscode.Task[]> {
     return this.tasks;
   }
-  public resolveTask(_task: vscode.Task): vscode.Task | undefined {
+  resolveTask(_task: vscode.Task): vscode.Task | undefined {
     return undefined;
   }
 }
 
-export const commandTasks: Task[] = [
-  new TipeCommandTask(),
-  new LogikaLineCommandTask(),
-  new LogikaFileCommandTask(),
-  new LogikaAllCommandTask(),
-  new CodeGenConfigCommandTask(),
-  new CodeGenCommandTask()
+export const tasks: Task[] = [
+  new TipeTask(),
+  new LogikaLineTask(),
+  new LogikaFileTask(),
+  new LogikaAllTask(),
+  new CodeGenConfigTask(),
+  new CodeGenTask()
 ];
 
 export const commands: Command<any>[] = [
   new PickCodeGenTarget(),
   new GetCodeGenTargetProperties(),
-  ...commandTasks
+  ...tasks
 ];

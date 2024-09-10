@@ -35,7 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
     .map((f) => f.uri.fsPath)
     .join(ct.psep);
   const ctMap = new Map<string, ct.Task>();
-  ct.commandTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
+  ct.tasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
   vscode.tasks.onDidStartTaskProcess((e) =>
     ctMap.get(e.execution.task.name)?.start(e)
   );
@@ -48,7 +48,7 @@ export function activate(context: vscode.ExtensionContext) {
   const taskProvider = new ct.SireumTaskProvider();
   workspaceFolders.forEach((f) =>
     vscode.tasks.registerTaskProvider(
-      ct.SireumTaskProvider.SireumType,
+      ct.SireumTaskProvider.TYPE,
       taskProvider
     )
   );
