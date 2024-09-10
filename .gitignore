@@ -9,3 +9,5 @@
 *.iml
 /hamr
 /air.json
+/vscode-test/hamr
+/vscode-test/air.json
