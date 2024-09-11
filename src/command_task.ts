@@ -23,7 +23,6 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import * as vscode from "vscode";
-import * as deflater from "./deflater";
 import fs = require("fs");
 
 const tmp = require("tmp");
@@ -64,25 +63,6 @@ class PickCodeGenTarget extends Command<string> {
       { title: "HAMR CodeGen Target", canPickMany: false }
     );
     return pick;
-  }
-}
-
-class GetCodeGenTargetProperties extends Command<string> {
-  static COMMAND = "${command:org.sireum.hamr.codegen.getTargetProperties}";
-  command = GetCodeGenTargetProperties.COMMAND;
-  run(context: vscode.ExtensionContext, workspaceRoots: string): any {
-    const content = JSON.stringify({
-      jvm: vscode.workspace.getConfiguration(jvmTargetKey),
-      macos: vscode.workspace.getConfiguration(macOSTargetKey),
-      linux: vscode.workspace.getConfiguration(linuxTargetKey),
-      cygwin: vscode.workspace.getConfiguration(cygwinTargetKey),
-      sel4: vscode.workspace.getConfiguration(sel4TargetKey),
-      sel4Only: vscode.workspace.getConfiguration(sel4OnlyTargetKey),
-      sel4TB: vscode.workspace.getConfiguration(sel4TBTargetKey),
-    });
-    const path = tmp.fileSync().name;
-    fs.writeFileSync(path, deflater.deflate(JSON.parse(content)).join("\n"));
-    return path;
   }
 }
 
@@ -355,7 +335,7 @@ class CodeGenTask extends Task {
 class CodeGenConfigTask extends Task {
   taskLabel = `${taskLabelPrefix} config`;
   command = "${command:org.sireum.hamr.sysml.config}";
-  cliArgs = `${sireumScript} hamr sysml config --parseable-messages --target ${PickCodeGenTarget.COMMAND} --properties "${GetCodeGenTargetProperties.COMMAND}" "\${file}"`;
+  cliArgs = `${sireumScript} hamr sysml config --parseable-messages --target ${PickCodeGenTarget.COMMAND} "\${file}"`;
   focus = false;
   start(
     context: vscode.ExtensionContext,
@@ -419,7 +399,6 @@ export const tasks: Task[] = [
 
 export const commands: Command<any>[] = [
   new PickCodeGenTarget(),
-  new GetCodeGenTargetProperties(),
   new LogikaClearCommand(),
   ...tasks,
 ];
