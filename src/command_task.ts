@@ -110,6 +110,7 @@ let decorations: Map<
 let linesMap: Map<string, Set<number>>;
 
 function decorate(
+  isCoverage: boolean,
   kind: string,
   e: vscode.TextEditor,
   lightIcon: string | undefined,
@@ -125,7 +126,8 @@ function decorate(
   }
   let p = decorations.get(kind);
   if (!p) {
-    const bgColor = `rgba(129, 62, 200, 0.2)`;
+    const orColor = `rgba(129, 62, 200, 0.2)`
+    const bgColor =  isCoverage ? orColor : undefined;
     const iconSize = darkIcon ? "75%" : undefined;
     const documentDecorationType = vscode.window.createTextEditorDecorationType(
       {
@@ -190,15 +192,16 @@ abstract class LogikaTask extends Task {
     const lightIcon = `${imagesPath}${fsep}gutter-summoning@2x.png`;
     const darkIcon = `${imagesPath}${fsep}gutter-summoning@2x_dark.png`;
     decorate(
+      false,
       o.type,
       e,
       lightIcon,
       darkIcon,
       `${o.info}\n${o.query}`,
-      o.pos.beginLine,
-      o.pos.beginColumn,
-      o.pos.endLine,
-      o.pos.endColumn
+      o.pos.beginLine - 1,
+      o.pos.beginColumn - 1,
+      o.pos.endLine - 1,
+      o.pos.endColumn - 1
     );
   }
   processInfo(
@@ -210,6 +213,7 @@ abstract class LogikaTask extends Task {
     const lightIcon = `${imagesPath}${fsep}gutter-logika-verified@2x.png`;
     const darkIcon = `${imagesPath}${fsep}gutter-logika-verified@2x_dark.png`;
     decorate(
+      false,
       o.type,
       e,
       lightIcon,
@@ -229,10 +233,12 @@ abstract class LogikaTask extends Task {
     if (!lines) {
       lines = new Set();
     }
+    console.log(`${o.pos.beginLine}, ${o.pos.endLine}`)
     for (let line = o.pos.beginLine; line <= o.pos.endLine; line += 1) {
       if (!lines.has(line)) {
         lines.add(line);
         decorate(
+          true,
           o.type,
           e,
           undefined,
