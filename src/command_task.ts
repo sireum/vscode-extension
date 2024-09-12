@@ -233,7 +233,6 @@ abstract class LogikaTask extends Task {
     if (!lines) {
       lines = new Set();
     }
-    console.log(`${o.pos.beginLine}, ${o.pos.endLine}`)
     for (let line = o.pos.beginLine; line <= o.pos.endLine; line += 1) {
       if (!lines.has(line)) {
         lines.add(line);
