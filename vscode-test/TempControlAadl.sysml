@@ -1,4 +1,4 @@
-//@ HAMR: --output-dir hamr/slang -n tc
+//@ HAMR: --slang-output-dir hamr/slang -n tc
 
 // codegen will write out to the workspace root dir if output-dir is not set.
 // The option can be relative to the workspace (above) or absolute
