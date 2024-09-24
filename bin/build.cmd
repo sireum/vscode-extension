@@ -36,7 +36,7 @@ def pkg(): Unit = {
   packageJson.writeOver(ops.StringOps(ops.StringOps(content).
     replaceAllLiterally("v0.0.0", vs(2))).
     replaceAllLiterally("0.0.0", st"${(vs(2 ~> lastV), ".")}".render))
-  proc"vsce package".at(home).echo.console.run()
+  proc"vsce package".at(home).echo.console.runCheck()
   packageJson.writeOver(content)
   for (p <- home.list if p.ext == "vsix" && !ops.StringOps(p.name).startsWith("sireum-")) {
     p.moveOverTo(p.up / "sireum-vscode-extension.vsix")
