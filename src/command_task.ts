@@ -35,13 +35,6 @@ const sireumScript = `"\${env:SIREUM_HOME}\${pathSeparator}bin\${pathSeparator}s
 const taskLabelPrefix = "hamr sysml";
 const feedbackPlaceHolder = "$feedback";
 const workspaceRootsPlaceHolder = "$workspaceRoots";
-const jvmTargetKey = "org.sireum.hamr.codegen.target.jvm";
-const macOSTargetKey = "org.sireum.hamr.codegen.target.macos";
-const linuxTargetKey = "org.sireum.hamr.codegen.target.linux";
-const cygwinTargetKey = "org.sireum.hamr.codegen.target.cygwin";
-const sel4TargetKey = "org.sireum.hamr.codegen.target.sel4";
-const sel4OnlyTargetKey = "org.sireum.hamr.codegen.target.sel4_only";
-const sel4TBTargetKey = "org.sireum.hamr.codegen.target.sel4_tb";
 
 export abstract class Command<T> {
   public command!: string;
@@ -59,7 +52,7 @@ class PickCodeGenTarget extends Command<string> {
   command = PickCodeGenTarget.COMMAND;
   run(context: vscode.ExtensionContext, workspaceRoots: string): any {
     const pick = vscode.window.showQuickPick(
-      ["JVM", "macOS", "Linux", "Cygwin", "seL4", "seL4_Only", "seL4_TB"],
+      ["JVM", "Linux", "Cygwin", "macOS", "seL4", "seL4_Only", "seL4_TB", "Microkit", "ros2"],
       { title: "HAMR CodeGen Target", canPickMany: false }
     );
     return pick;
@@ -328,7 +321,7 @@ class LogikaLineTask extends LogikaTask {
 class CodeGenTask extends Task {
   taskLabel = `${taskLabelPrefix} codegen`;
   command = "${command:org.sireum.hamr.sysml.codegen}";
-  cliArgs = `${sireumScript} hamr sysml codegen --parseable-messages --sourcepath "$workspaceRoots" --line \${lineNumber} "\${file}"`;
+  cliArgs = `${sireumScript} hamr sysml codegen --parseable-messages --sourcepath "$workspaceRoots" --line \${lineNumber} --platform ${PickCodeGenTarget.COMMAND} "\${file}"`;
   focus = true;
   start(
     context: vscode.ExtensionContext,
@@ -340,7 +333,7 @@ class CodeGenTask extends Task {
 class CodeGenConfigTask extends Task {
   taskLabel = `${taskLabelPrefix} config`;
   command = "${command:org.sireum.hamr.sysml.config}";
-  cliArgs = `${sireumScript} hamr sysml config --parseable-messages --target ${PickCodeGenTarget.COMMAND} "\${file}"`;
+  cliArgs = `${sireumScript} hamr sysml config --parseable-messages "\${file}"`;
   focus = false;
   start(
     context: vscode.ExtensionContext,
