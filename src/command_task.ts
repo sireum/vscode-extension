@@ -63,6 +63,7 @@ export abstract class Task extends Command<void> {
   public taskLabel!: string;
   public cliArgs!: string;
   public focus!: boolean;
+  public fileExtension: undefined | string;
   public abstract start(
     context: vscode.ExtensionContext,
     e: vscode.TaskProcessStartEvent
@@ -72,6 +73,13 @@ export abstract class Task extends Command<void> {
     e: vscode.TaskProcessEndEvent
   ): void;
   public run(context: vscode.ExtensionContext, workspaceRoots: string): void {
+    if (this.fileExtension) {
+      const b = vscode.window.activeTextEditor?.document.fileName.endsWith(`.${ext}`);
+      if (b == undefined || !b) {
+        vscode.window.showInformationMessage(`Task "sireum ${this.taskLabel}" can only be used for a .sysml file`);
+        return;
+      }
+    }
     let command = this.cliArgs.replaceAll(
       workspaceRootsPlaceHolder,
       workspaceRoots
@@ -84,7 +92,11 @@ export abstract class Task extends Command<void> {
   }
 }
 
-class TipeTask extends Task {
+abstract class SysMLTask extends Task {
+  fileExtension = "sysml"
+}
+
+class TipeTask extends SysMLTask {
   taskLabel = `${taskLabelPrefix} tipe`;
   command = "${command:org.sireum.hamr.sysml.tipe}";
   cliArgs = `${sireumScript} hamr sysml tipe --parseable-messages --sourcepath "$workspaceRoots"`;
@@ -173,7 +185,7 @@ class LogikaClearCommand extends Command<void> {
   }
 }
 
-abstract class LogikaTask extends Task {
+abstract class LogikaTask extends SysMLTask {
   ac = new AbortController();
   feedback: string | undefined = undefined;
   processSmt2Query(
@@ -318,7 +330,7 @@ class LogikaLineTask extends LogikaTask {
   focus = false;
 }
 
-class CodeGenTask extends Task {
+class CodeGenTask extends SysMLTask {
   taskLabel = `${taskLabelPrefix} codegen`;
   command = "${command:org.sireum.hamr.sysml.codegen}";
   cliArgs = `${sireumScript} hamr sysml codegen --parseable-messages --sourcepath "$workspaceRoots" --line \${lineNumber} --platform ${PickCodeGenTarget.COMMAND} "\${file}"`;
@@ -330,7 +342,7 @@ class CodeGenTask extends Task {
   post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {}
 }
 
-class CodeGenConfigTask extends Task {
+class CodeGenConfigTask extends SysMLTask {
   taskLabel = `${taskLabelPrefix} config`;
   command = "${command:org.sireum.hamr.sysml.config}";
   cliArgs = `${sireumScript} hamr sysml config --parseable-messages "\${file}"`;
@@ -379,7 +391,7 @@ export class SireumTaskProvider implements vscode.TaskProvider {
   }
 
   async provideTasks(): Promise<vscode.Task[]> {
-    return vscode.window.activeTextEditor?.document.fileName.endsWith(".sysml") ? this.tasks : [];
+    return this.tasks;
   }
   resolveTask(_task: vscode.Task): vscode.Task | undefined {
     return undefined;
