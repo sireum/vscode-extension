@@ -379,7 +379,7 @@ export class SireumTaskProvider implements vscode.TaskProvider {
   }
 
   async provideTasks(): Promise<vscode.Task[]> {
-    return this.tasks;
+    return vscode.window.activeTextEditor?.document.fileName.endsWith(".sysml") ? this.tasks : [];
   }
   resolveTask(_task: vscode.Task): vscode.Task | undefined {
     return undefined;
