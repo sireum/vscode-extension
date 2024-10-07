@@ -74,7 +74,7 @@ export abstract class Task extends Command<void> {
   ): void;
   public run(context: vscode.ExtensionContext, workspaceRoots: string): void {
     if (this.fileExtension) {
-      const b = vscode.window.activeTextEditor?.document.fileName.endsWith(`.${ext}`);
+      const b = vscode.window.activeTextEditor?.document.fileName.endsWith(`.${this.fileExtension}`);
       if (b == undefined || !b) {
         vscode.window.showInformationMessage(`Task "sireum ${this.taskLabel}" can only be used for a .sysml file`);
         return;
