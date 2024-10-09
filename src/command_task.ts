@@ -32,7 +32,8 @@ export const psep = isWindows ? ";" : ":";
 export const fsep = isWindows ? "\\" : "/";
 const ext = isWindows ? ".bat" : "";
 const sireumScript = `"\${env:SIREUM_HOME}\${pathSeparator}bin\${pathSeparator}sireum${ext}"`;
-const taskLabelPrefix = "hamr sysml";
+const sysmlTaskLabelPrefix = "hamr sysml";
+const scTaskLabelPrefix = "logika verifier";
 const feedbackPlaceHolder = "$feedback";
 const workspaceRootsPlaceHolder = "$workspaceRoots";
 
@@ -96,8 +97,8 @@ abstract class SysMLTask extends Task {
   fileExtension = "sysml"
 }
 
-class TipeTask extends SysMLTask {
-  taskLabel = `${taskLabelPrefix} tipe`;
+class TipeSysmlTask extends SysMLTask {
+  taskLabel = `${sysmlTaskLabelPrefix} tipe`;
   command = "${command:org.sireum.hamr.sysml.tipe}";
   cliArgs = `${sireumScript} hamr sysml tipe --parseable-messages --sourcepath "$workspaceRoots"`;
   focus = false;
@@ -158,7 +159,7 @@ function decorate(
       new vscode.Position(beginLine, beginColumn),
       new vscode.Position(endLine, endColumn)
     ),
-    hoverMessage: new vscode.MarkdownString(`~~~raw~~~ ${hoverText}`),
+    hoverMessage: hoverText? new vscode.MarkdownString(`~~~raw~~~\n${hoverText}`) : undefined,
   });
   decorations.set(kind, p);
   e.setDecorations(p![0], p![1]);
@@ -178,14 +179,14 @@ function clearDecorations() {
 }
 
 class LogikaClearCommand extends Command<void> {
-  static COMMAND = "${command:org.sireum.hamr.sysml.logika.clear}";
+  static COMMAND = "${command:org.sireum.logika.clear}";
   command = LogikaClearCommand.COMMAND;
   public run(context: vscode.ExtensionContext, workspaceRoots: string): void {
     clearDecorations();
   }
 }
 
-abstract class LogikaTask extends SysMLTask {
+abstract class LogikaTask extends Task {
   ac = new AbortController();
   feedback: string | undefined = undefined;
   processSmt2Query(
@@ -204,9 +205,30 @@ abstract class LogikaTask extends SysMLTask {
       darkIcon,
       `${o.info}\n${o.query}`,
       o.pos.beginLine - 1,
-      o.pos.beginColumn - 1,
-      o.pos.endLine - 1,
-      o.pos.endColumn - 1
+      0,
+      o.pos.beginLine - 1,
+      0
+    );
+  }
+  processState(
+    context: vscode.ExtensionContext,
+    e: vscode.TextEditor,
+    o: any
+  ): void {
+    const imagesPath = context.asAbsolutePath("images");
+    const lightIcon = `${imagesPath}${fsep}gutter-hint@2x.png`;
+    const darkIcon = `${imagesPath}${fsep}gutter-hint@2x_dark.png`;
+    decorate(
+      false,
+      o.type,
+      e,
+      lightIcon,
+      darkIcon,
+      `${o.claims}`,
+      o.pos.beginLine - 1,
+      0,
+      o.pos.beginLine - 1,
+      0
     );
   }
   processInfo(
@@ -223,11 +245,11 @@ abstract class LogikaTask extends SysMLTask {
       e,
       lightIcon,
       darkIcon,
-      `${o.info}\n${o.query}`,
-      o.pos.beginLine,
-      o.pos.beginColumn,
-      o.pos.endLine,
-      o.pos.endColumn
+      `${o.message}`,
+      o.pos.beginLine - 1,
+      0,
+      o.pos.beginLine - 1,
+      0
     );
   }
   processCoverage(e: vscode.TextEditor, o: any) {
@@ -278,6 +300,9 @@ abstract class LogikaTask extends SysMLTask {
           const o = JSON.parse(
             fs.readFileSync(`${this.feedback}${fsep}${e.filename!}`, "utf8")
           );
+          if (!o.pos) {
+            o.pos = o.posOpt.value;
+          }
           vscode.window.visibleTextEditors.forEach((e) => {
             if (e.document.uri == o.pos.uriOpt.value) {
               switch (o.type) {
@@ -286,6 +311,9 @@ abstract class LogikaTask extends SysMLTask {
                   break;
                 case "Logika.Verify.Info":
                   this.processInfo(context, e, o);
+                  break;
+                case "Logika.Verify.State":
+                  this.processState(context, e, o);
                   break;
                 case "Analysis.Coverage":
                   this.processCoverage(e, o);
@@ -309,29 +337,32 @@ abstract class LogikaTask extends SysMLTask {
   }
 }
 
-class LogikaAllTask extends LogikaTask {
-  taskLabel = `${taskLabelPrefix} logika all`;
+class LogikaSysmlAllTask extends LogikaTask {
+  fileExtension = "sysml";
+  taskLabel = `${sysmlTaskLabelPrefix} logika all`;
   command = "${command:org.sireum.hamr.sysml.logika.all}";
   cliArgs = `${sireumScript} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}"`;
   focus = false;
 }
 
-class LogikaFileTask extends LogikaTask {
-  taskLabel = `${taskLabelPrefix} logika file`;
+class LogikaSysmlFileTask extends LogikaTask {
+  fileExtension = "sysml";
+  taskLabel = `${sysmlTaskLabelPrefix} logika file`;
   command = "${command:org.sireum.hamr.sysml.logika.file}";
   cliArgs = `${sireumScript} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}" "\${file}"`;
   focus = false;
 }
 
-class LogikaLineTask extends LogikaTask {
-  taskLabel = `${taskLabelPrefix} logika line`;
+class LogikaSysmlLineTask extends LogikaTask {
+  fileExtension = "sysml";
+  taskLabel = `${sysmlTaskLabelPrefix} logika line`;
   command = "${command:org.sireum.hamr.sysml.logika.line}";
   cliArgs = `${sireumScript} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}" --line \${lineNumber} "\${file}"`;
   focus = false;
 }
 
 class CodeGenTask extends SysMLTask {
-  taskLabel = `${taskLabelPrefix} codegen`;
+  taskLabel = `${sysmlTaskLabelPrefix} codegen`;
   command = "${command:org.sireum.hamr.sysml.codegen}";
   cliArgs = `${sireumScript} hamr sysml codegen --parseable-messages --sourcepath "$workspaceRoots" --line \${lineNumber} --platform ${PickCodeGenTarget.COMMAND} "\${file}"`;
   focus = true;
@@ -343,7 +374,7 @@ class CodeGenTask extends SysMLTask {
 }
 
 class CodeGenConfigTask extends SysMLTask {
-  taskLabel = `${taskLabelPrefix} config`;
+  taskLabel = `${sysmlTaskLabelPrefix} config`;
   command = "${command:org.sireum.hamr.sysml.config}";
   cliArgs = `${sireumScript} hamr sysml config --parseable-messages "\${file}"`;
   focus = false;
@@ -352,6 +383,50 @@ class CodeGenConfigTask extends SysMLTask {
     e: vscode.TaskProcessStartEvent
   ): void {}
   post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {}
+}
+
+
+class RunScTask extends Task {
+  fileExtension = "sc";
+  taskLabel = `slang run`;
+  command = "${command:org.sireum.slang.run}";
+  cliArgs = `${sireumScript} slang run "\${file}"`;
+  focus = true;
+  start(
+    context: vscode.ExtensionContext,
+    e: vscode.TaskProcessStartEvent
+  ): void {}
+  post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {}
+}
+
+
+class TipeScTask extends Task {
+  fileExtension = "sc";
+  taskLabel = `slang tipe`;
+  command = "${command:org.sireum.slang.tipe}";
+  cliArgs = `${sireumScript} slang tipe --parseable-messages "\${file}"`;
+  focus = false;
+  start(
+    context: vscode.ExtensionContext,
+    e: vscode.TaskProcessStartEvent
+  ): void {}
+  post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {}
+}
+
+class LogikaScFileTask extends LogikaTask {
+  fileExtension = "sc";
+  taskLabel = `${scTaskLabelPrefix} file`;
+  command = "${command:org.sireum.logika.verifier.file}";
+  cliArgs = `${sireumScript} logika verifier --parseable-messages --log-detailed-info ${feedbackPlaceHolder} "\${file}"`;
+  focus = false;
+}
+
+class LogikaScLineTask extends LogikaTask {
+  fileExtension = "sc";
+  taskLabel = `${scTaskLabelPrefix} line`;
+  command = "${command:org.sireum.logika.verifier.line}";
+  cliArgs = `${sireumScript} logika verifier --parseable-messages --log-detailed-info ${feedbackPlaceHolder} --line \${lineNumber} "\${file}"`;
+  focus = false;
 }
 
 export function getTask(
@@ -399,12 +474,16 @@ export class SireumTaskProvider implements vscode.TaskProvider {
 }
 
 export const tasks: Task[] = [
-  new TipeTask(),
-  new LogikaLineTask(),
-  new LogikaFileTask(),
-  new LogikaAllTask(),
+  new TipeSysmlTask(),
+  new LogikaSysmlLineTask(),
+  new LogikaSysmlFileTask(),
+  new LogikaSysmlAllTask(),
   new CodeGenConfigTask(),
   new CodeGenTask(),
+  new TipeScTask(),
+  new LogikaScFileTask(),
+  new LogikaScLineTask(),
+  new RunScTask()
 ];
 
 export const commands: Command<any>[] = [
