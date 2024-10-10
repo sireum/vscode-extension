@@ -35,7 +35,10 @@ export function activate(context: vscode.ExtensionContext) {
     .map((f) => f.uri.fsPath)
     .join(ct.psep);
   const ctMap = new Map<string, ct.Task>();
-  ct.tasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
+  ct.sireumTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
+  ct.slangTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
+  ct.hamrTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
+  ct.logikaTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
   vscode.tasks.onDidStartTaskProcess((e) =>
     ctMap.get(e.execution.task.name)?.start(context, e)
   );
@@ -49,8 +52,20 @@ export function activate(context: vscode.ExtensionContext) {
       )
     );
   });
-  const taskProvider = new ct.SireumTaskProvider();
+  let taskProvider = new ct.SireumTaskProvider();
   workspaceFolders.forEach((f) =>
     vscode.tasks.registerTaskProvider(ct.SireumTaskProvider.TYPE, taskProvider)
+  );
+  taskProvider = new ct.SireumSlangTaskProvider();
+  workspaceFolders.forEach((f) =>
+    vscode.tasks.registerTaskProvider(ct.SireumSlangTaskProvider.TYPE, taskProvider)
+  );
+  taskProvider = new ct.SireumHamrTaskProvider();
+  workspaceFolders.forEach((f) =>
+    vscode.tasks.registerTaskProvider(ct.SireumHamrTaskProvider.TYPE, taskProvider)
+  );
+  taskProvider = new ct.SireumLogikaTaskProvider();
+  workspaceFolders.forEach((f) =>
+    vscode.tasks.registerTaskProvider(ct.SireumLogikaTaskProvider.TYPE, taskProvider)
   );
 }

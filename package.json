@@ -53,6 +53,42 @@
             "type": "string"
           }
         }
+      },
+      {
+        "type": "sireum slang",
+        "when": "shellExecutionSupported",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string"
+          }
+        }
+      },
+      {
+        "type": "sireum hamr",
+        "when": "shellExecutionSupported",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string"
+          }
+        }
+      },
+      {
+        "type": "sireum logika",
+        "when": "shellExecutionSupported",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string"
+          }
+        }
       }
     ]
   },

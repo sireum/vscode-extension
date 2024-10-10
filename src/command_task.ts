@@ -32,8 +32,8 @@ export const psep = isWindows ? ";" : ":";
 export const fsep = isWindows ? "\\" : "/";
 const ext = isWindows ? ".bat" : "";
 const sireumScript = `"\${env:SIREUM_HOME}\${pathSeparator}bin\${pathSeparator}sireum${ext}"`;
-const sysmlTaskLabelPrefix = "hamr sysml";
-const scTaskLabelPrefix = "logika verifier";
+const sysmlTaskLabelPrefix = "sysml";
+const logikaTaskLabelPrefix = "verifier";
 const feedbackPlaceHolder = "$feedback";
 const workspaceRootsPlaceHolder = "$workspaceRoots";
 
@@ -61,10 +61,11 @@ class PickCodeGenTarget extends Command<string> {
 }
 
 export abstract class Task extends Command<void> {
+  public type!: string;
   public taskLabel!: string;
   public cliArgs!: string;
   public focus!: boolean;
-  public fileExtension: undefined | string;
+  public fileExtensions: undefined | string[];
   public abstract start(
     context: vscode.ExtensionContext,
     e: vscode.TaskProcessStartEvent
@@ -74,10 +75,25 @@ export abstract class Task extends Command<void> {
     e: vscode.TaskProcessEndEvent
   ): void;
   public run(context: vscode.ExtensionContext, workspaceRoots: string): void {
-    if (this.fileExtension) {
-      const b = vscode.window.activeTextEditor?.document.fileName.endsWith(`.${this.fileExtension}`);
-      if (b == undefined || !b) {
-        vscode.window.showInformationMessage(`Task "sireum ${this.taskLabel}" can only be used for a .sysml file`);
+    if (this.fileExtensions) {
+      let found = false;
+      for (const ext in this.fileExtensions) {
+        const b = vscode.window.activeTextEditor?.document.fileName.endsWith(`.${this.fileExtensions}`);
+        if (b) {
+          found = true;
+        }
+      }
+      if (!found) {
+        let exts = `.${this.fileExtensions[0]}`;
+        const size = this.fileExtensions.length;
+        for (let i = 1; i < size; i++) {
+          if (i == size - 1) {
+            exts = `${exts}, or a .${this.fileExtensions[i]}`
+          } else {
+            exts = `${exts}, a .${this.fileExtensions[i]}`
+          }
+        }
+        vscode.window.showInformationMessage(`Task "${this.type} ${this.taskLabel}" can only be used for a ${exts} file`);
         return;
       }
     }
@@ -89,12 +105,49 @@ export abstract class Task extends Command<void> {
       const path = tmp.dirSync().name;
       command = command.replaceAll(feedbackPlaceHolder, `--feedback "${path}"`);
     }
-    vscode.tasks.executeTask(getTask(this.taskLabel, command, this.focus));
+    vscode.tasks.executeTask(getTask(this.type!, this.taskLabel, command, this.focus));
   }
 }
 
+abstract class InstallTask extends Task {
+  type = SireumTaskProvider.TYPE;
+  fileExtensions = undefined;
+  start(
+    context: vscode.ExtensionContext,
+    e: vscode.TaskProcessStartEvent
+  ): void {}
+  post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {}
+}
+
+class InstallFonts extends InstallTask { 
+  taskLabel = "--install-fonts";
+  command = "${command:org.sireum.install.fonts}";
+  cliArgs = `${sireumScript} --install-fonts`;
+  focus = true;
+}
+
+class InstallDeps extends InstallTask {
+  taskLabel = "--init";
+  command = "${command:org.sireum.install.deps}";
+  cliArgs = `${sireumScript} --init`;
+  focus = true;
+}
+
+class InstallIve extends InstallTask {
+  taskLabel = "--setup";
+  command = "${command:org.sireum.install.ive}";
+  cliArgs = `${sireumScript} --setup`;
+  focus = true;
+}
+
 abstract class SysMLTask extends Task {
-  fileExtension = "sysml"
+  type = SireumHamrTaskProvider.TYPE;
+  fileExtensions = ["sysml"];
+  start(
+    context: vscode.ExtensionContext,
+    e: vscode.TaskProcessStartEvent
+  ): void {}
+  post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {}
 }
 
 class TipeSysmlTask extends SysMLTask {
@@ -337,47 +390,51 @@ abstract class LogikaTask extends Task {
   }
 }
 
-class LogikaSysmlAllTask extends LogikaTask {
-  fileExtension = "sysml";
-  taskLabel = `${sysmlTaskLabelPrefix} logika all`;
+abstract class LogikaSysmlTask extends LogikaTask {
+  type = SireumHamrTaskProvider.TYPE;
+  fileExtensions = ["sysml"];
+}
+
+class LogikaSysmlAllTask extends LogikaSysmlTask {
+  taskLabel = `${sysmlTaskLabelPrefix} logika (all)`;
   command = "${command:org.sireum.hamr.sysml.logika.all}";
   cliArgs = `${sireumScript} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}"`;
   focus = false;
 }
 
-class LogikaSysmlFileTask extends LogikaTask {
-  fileExtension = "sysml";
-  taskLabel = `${sysmlTaskLabelPrefix} logika file`;
+class LogikaSysmlFileTask extends LogikaSysmlTask {
+  taskLabel = `${sysmlTaskLabelPrefix} logika (file)`;
   command = "${command:org.sireum.hamr.sysml.logika.file}";
   cliArgs = `${sireumScript} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}" "\${file}"`;
   focus = false;
 }
 
-class LogikaSysmlLineTask extends LogikaTask {
-  fileExtension = "sysml";
-  taskLabel = `${sysmlTaskLabelPrefix} logika line`;
+class LogikaSysmlLineTask extends LogikaSysmlTask {
+  taskLabel = `${sysmlTaskLabelPrefix} logika (line)`;
   command = "${command:org.sireum.hamr.sysml.logika.line}";
   cliArgs = `${sireumScript} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}" --line \${lineNumber} "\${file}"`;
   focus = false;
 }
 
 class CodeGenTask extends SysMLTask {
+  type = SireumHamrTaskProvider.TYPE;
   taskLabel = `${sysmlTaskLabelPrefix} codegen`;
   command = "${command:org.sireum.hamr.sysml.codegen}";
   cliArgs = `${sireumScript} hamr sysml codegen --parseable-messages --sourcepath "$workspaceRoots" --line \${lineNumber} --platform ${PickCodeGenTarget.COMMAND} "\${file}"`;
   focus = true;
-  start(
-    context: vscode.ExtensionContext,
-    e: vscode.TaskProcessStartEvent
-  ): void {}
-  post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {}
 }
 
 class CodeGenConfigTask extends SysMLTask {
+  type = SireumHamrTaskProvider.TYPE;
   taskLabel = `${sysmlTaskLabelPrefix} config`;
   command = "${command:org.sireum.hamr.sysml.config}";
   cliArgs = `${sireumScript} hamr sysml config --parseable-messages "\${file}"`;
   focus = false;
+}
+
+abstract class SlangScTask extends Task {
+  type = SireumSlangTaskProvider.TYPE;
+  fileExtensions = ["sc"];
   start(
     context: vscode.ExtensionContext,
     e: vscode.TaskProcessStartEvent
@@ -385,60 +442,55 @@ class CodeGenConfigTask extends SysMLTask {
   post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {}
 }
 
-
-class RunScTask extends Task {
-  fileExtension = "sc";
-  taskLabel = `slang run`;
+class RunScTask extends SlangScTask {
+  taskLabel = `run`;
   command = "${command:org.sireum.slang.run}";
   cliArgs = `${sireumScript} slang run "\${file}"`;
   focus = true;
-  start(
-    context: vscode.ExtensionContext,
-    e: vscode.TaskProcessStartEvent
-  ): void {}
-  post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {}
 }
 
-
-class TipeScTask extends Task {
-  fileExtension = "sc";
-  taskLabel = `slang tipe`;
+class TipeScTask extends SlangScTask {
+  taskLabel = `tipe`;
   command = "${command:org.sireum.slang.tipe}";
   cliArgs = `${sireumScript} slang tipe --parseable-messages "\${file}"`;
   focus = false;
-  start(
-    context: vscode.ExtensionContext,
-    e: vscode.TaskProcessStartEvent
-  ): void {}
-  post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {}
 }
 
-class LogikaScFileTask extends LogikaTask {
-  fileExtension = "sc";
-  taskLabel = `${scTaskLabelPrefix} file`;
+abstract class LogikaScTask extends LogikaTask {
+  type = SireumLogikaTaskProvider.TYPE;
+  fileExtensions = ["sc"];
+  post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {
+    super.post(context, e);
+    vscode.window.showInformationMessage(e.exitCode == 0? "Logika verified" : "Ill-formed program");
+  }
+}
+
+class LogikaScFileTask extends LogikaScTask {
+  fileExtensions = ["sc", "logika"];
+  taskLabel = `${logikaTaskLabelPrefix} (file)`;
   command = "${command:org.sireum.logika.verifier.file}";
   cliArgs = `${sireumScript} logika verifier --parseable-messages --log-detailed-info ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
-class LogikaScLineTask extends LogikaTask {
-  fileExtension = "sc";
-  taskLabel = `${scTaskLabelPrefix} line`;
+class LogikaScLineTask extends LogikaScTask {
+  taskLabel = `${logikaTaskLabelPrefix} (line)`;
   command = "${command:org.sireum.logika.verifier.line}";
   cliArgs = `${sireumScript} logika verifier --parseable-messages --log-detailed-info ${feedbackPlaceHolder} --line \${lineNumber} "\${file}"`;
   focus = false;
 }
 
 export function getTask(
+  type: string,
   kind: string,
   args: string,
   focus: boolean
 ): vscode.Task {
   const t = new vscode.Task(
-    { type: SireumTaskProvider.TYPE, kind: kind },
+    { type: type, kind: kind },
     vscode.TaskScope.Workspace,
     kind,
-    SireumTaskProvider.TYPE,
+    type,
     new vscode.ShellExecution(args),
     ["$sireumProblemMatcher"]
   );
@@ -458,9 +510,43 @@ export class SireumTaskProvider implements vscode.TaskProvider {
   tasks: vscode.Task[] = this.getTasks();
 
   getTasks(): vscode.Task[] {
-    const ts = tasks.map((ct) => getTask(ct.taskLabel, ct.command, ct.focus));
+    const ts = sireumTasks.map((ct) => getTask(SireumTaskProvider.TYPE, ct.taskLabel, ct.command, ct.focus));
+    return ts;
+  }
+
+  async provideTasks(): Promise<vscode.Task[]> {
+    return this.tasks;
+  }
+  resolveTask(_task: vscode.Task): vscode.Task | undefined {
+    return undefined;
+  }
+}
+
+export class SireumSlangTaskProvider implements vscode.TaskProvider {
+  static TYPE = "sireum slang";
+  tasks: vscode.Task[] = this.getTasks();
+
+  getTasks(): vscode.Task[] {
+    const ts = slangTasks.map((ct) => getTask(SireumSlangTaskProvider.TYPE, ct.taskLabel, ct.command, ct.focus));
+    return ts;
+  }
+
+  async provideTasks(): Promise<vscode.Task[]> {
+    return this.tasks;
+  }
+  resolveTask(_task: vscode.Task): vscode.Task | undefined {
+    return undefined;
+  }
+}
+
+export class SireumHamrTaskProvider implements vscode.TaskProvider {
+  static TYPE = "sireum hamr";
+  tasks: vscode.Task[] = this.getTasks();
+
+  getTasks(): vscode.Task[] {
+    const ts = hamrTasks.map((ct) => getTask(SireumHamrTaskProvider.TYPE, ct.taskLabel, ct.command, ct.focus));
     ts.push(
-      getTask("hamr sysml logika clear", LogikaClearCommand.COMMAND, false)
+      getTask(SireumHamrTaskProvider.TYPE, "logika clear", LogikaClearCommand.COMMAND, false)
     );
     return ts;
   }
@@ -473,21 +559,56 @@ export class SireumTaskProvider implements vscode.TaskProvider {
   }
 }
 
-export const tasks: Task[] = [
+export class SireumLogikaTaskProvider implements vscode.TaskProvider {
+  static TYPE = "sireum logika";
+  tasks: vscode.Task[] = this.getTasks();
+
+  getTasks(): vscode.Task[] {
+    const ts = logikaTasks.map((ct) => getTask(SireumLogikaTaskProvider.TYPE, ct.taskLabel, ct.command, ct.focus));
+    ts.push(
+      getTask(SireumLogikaTaskProvider.TYPE, "clear", LogikaClearCommand.COMMAND, false)
+    );
+    return ts;
+  }
+
+  async provideTasks(): Promise<vscode.Task[]> {
+    return this.tasks;
+  }
+  resolveTask(_task: vscode.Task): vscode.Task | undefined {
+    return undefined;
+  }
+}
+
+export const sireumTasks: Task[] = [
+  new InstallFonts(),
+  new InstallDeps(),
+  new InstallIve(),
+];
+
+export const hamrTasks: Task[] = [
   new TipeSysmlTask(),
   new LogikaSysmlLineTask(),
   new LogikaSysmlFileTask(),
   new LogikaSysmlAllTask(),
   new CodeGenConfigTask(),
-  new CodeGenTask(),
+  new CodeGenTask()
+];
+
+export const slangTasks: Task[] = [
   new TipeScTask(),
-  new LogikaScFileTask(),
-  new LogikaScLineTask(),
   new RunScTask()
+];
+
+export const logikaTasks: Task[] = [
+  new LogikaScFileTask(),
+  new LogikaScLineTask()
 ];
 
 export const commands: Command<any>[] = [
   new PickCodeGenTarget(),
   new LogikaClearCommand(),
-  ...tasks,
+  ...sireumTasks,
+  ...hamrTasks,
+  ...slangTasks,
+  ...logikaTasks,
 ];
