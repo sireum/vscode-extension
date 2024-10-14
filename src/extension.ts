@@ -37,6 +37,8 @@ export function activate(context: vscode.ExtensionContext) {
   const ctMap = new Map<string, ct.Task>();
   ct.sireumTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
   ct.slangTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
+  ct.slangRefactorTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
+  ct.slangTemplateTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
   ct.hamrTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
   ct.logikaTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
   vscode.tasks.onDidStartTaskProcess((e) =>
@@ -59,6 +61,14 @@ export function activate(context: vscode.ExtensionContext) {
   taskProvider = new ct.SireumSlangTaskProvider();
   workspaceFolders.forEach((f) =>
     vscode.tasks.registerTaskProvider(ct.SireumSlangTaskProvider.TYPE, taskProvider)
+  );
+  taskProvider = new ct.SireumSlangRefactorTaskProvider();
+  workspaceFolders.forEach((f) =>
+    vscode.tasks.registerTaskProvider(ct.SireumSlangRefactorTaskProvider.TYPE, taskProvider)
+  );
+  taskProvider = new ct.SireumSlangTemplateTaskProvider();
+  workspaceFolders.forEach((f) =>
+    vscode.tasks.registerTaskProvider(ct.SireumSlangTemplateTaskProvider.TYPE, taskProvider)
   );
   taskProvider = new ct.SireumHamrTaskProvider();
   workspaceFolders.forEach((f) =>

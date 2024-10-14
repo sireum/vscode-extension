@@ -67,6 +67,30 @@
         }
       },
       {
+        "type": "sireum slang refactor",
+        "when": "shellExecutionSupported",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string"
+          }
+        }
+      },
+      {
+        "type": "sireum slang template",
+        "when": "shellExecutionSupported",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string"
+          }
+        }
+      },
+      {
         "type": "sireum hamr",
         "when": "shellExecutionSupported",
         "required": [
