@@ -31,11 +31,12 @@ export const isWindows = process.platform === "win32";
 export const psep = isWindows ? ";" : ":";
 export const fsep = isWindows ? "\\" : "/";
 const ext = isWindows ? ".bat" : "";
-const sireumScript = `"\${env:SIREUM_HOME}\${pathSeparator}bin\${pathSeparator}sireum${ext}"`;
 const sysmlTaskLabelPrefix = "sysml";
 const logikaTaskLabelPrefix = "verifier";
 const feedbackPlaceHolder = "$feedback";
 const workspaceRootsPlaceHolder = "$workspaceRoots";
+const sireumKey = "sireum";
+const sireumScriptSuffix = isWindows? `\\bin\\sireum.bat` : `/bin/sireum`;
 
 export abstract class Command<T> {
   public command!: string;
@@ -46,6 +47,41 @@ export abstract class Command<T> {
     context: vscode.ExtensionContext,
     workspaceRoots: string
   ): T;
+}
+
+class SireumScriptCommand extends Command<Promise<string | undefined>> {
+  static COMMAND = "${command:org.sireum.script}";
+  command = SireumScriptCommand.COMMAND;
+  async run(context: vscode.ExtensionContext, workspaceRoots: string): Promise<string | undefined> {
+    let sireumHome = process.env.SIREUM_HOME;
+    let update = false;
+    if (!sireumHome) {
+      update = true;
+      sireumHome = vscode.workspace.getConfiguration(sireumKey).get("home");
+    }
+    let r = `${sireumHome}${sireumScriptSuffix}`
+    while (!fs.existsSync(r)) {
+      update = true;
+      vscode.window.showInformationMessage("Please select Sireum's home folder path");
+      const uris = await vscode.window.showOpenDialog({
+        title: "Select Sireum home directory",
+        openLabel: "Select",
+        canSelectFiles: false,
+        canSelectFolders: true,
+        canSelectMany: false,
+      });
+      if (uris) {
+        sireumHome = uris[0].fsPath
+        r = `${sireumHome}${sireumScriptSuffix}`;
+      } else {
+        return undefined;
+      }
+    }
+    if (update) {
+      vscode.workspace.getConfiguration(sireumKey).update("home", sireumHome, vscode.ConfigurationTarget.Global);
+    }
+    return `"${r}"`;
+  }
 }
 
 class InsertSlangSymbolCommand extends Command<void> {
@@ -161,21 +197,21 @@ abstract class InstallTask extends Task {
 class InstallFonts extends InstallTask { 
   taskLabel = "--install-fonts";
   command = "${command:org.sireum.install.fonts}";
-  cliArgs = `${sireumScript} --install-fonts`;
+  cliArgs = `${SireumScriptCommand.COMMAND} --install-fonts`;
   focus = true;
 }
 
 class InstallDeps extends InstallTask {
   taskLabel = "--init";
   command = "${command:org.sireum.install.deps}";
-  cliArgs = `${sireumScript} --init`;
+  cliArgs = `${SireumScriptCommand.COMMAND} --init`;
   focus = true;
 }
 
 class InstallIve extends InstallTask {
   taskLabel = "--setup";
   command = "${command:org.sireum.install.ive}";
-  cliArgs = `${sireumScript} --setup`;
+  cliArgs = `${SireumScriptCommand.COMMAND} --setup`;
   focus = true;
 }
 
@@ -192,7 +228,7 @@ abstract class SysMLTask extends Task {
 class TipeSysmlTask extends SysMLTask {
   taskLabel = `${sysmlTaskLabelPrefix} tipe`;
   command = "${command:org.sireum.hamr.sysml.tipe}";
-  cliArgs = `${sireumScript} hamr sysml tipe --parseable-messages --sourcepath "$workspaceRoots"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} hamr sysml tipe --parseable-messages --sourcepath "$workspaceRoots"`;
   focus = false;
   start(
     context: vscode.ExtensionContext,
@@ -458,21 +494,21 @@ abstract class LogikaSysmlTask extends FeedbackTask {
 class LogikaSysmlAllTask extends LogikaSysmlTask {
   taskLabel = `${sysmlTaskLabelPrefix} logika (all)`;
   command = "${command:org.sireum.hamr.sysml.logika.all}";
-  cliArgs = `${sireumScript} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}"`;
   focus = false;
 }
 
 class LogikaSysmlFileTask extends LogikaSysmlTask {
   taskLabel = `${sysmlTaskLabelPrefix} logika (file)`;
   command = "${command:org.sireum.hamr.sysml.logika.file}";
-  cliArgs = `${sireumScript} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}" "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}" "\${file}"`;
   focus = false;
 }
 
 class LogikaSysmlLineTask extends LogikaSysmlTask {
   taskLabel = `${sysmlTaskLabelPrefix} logika (line)`;
   command = "${command:org.sireum.hamr.sysml.logika.line}";
-  cliArgs = `${sireumScript} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}" --line \${lineNumber} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} hamr sysml logika --parseable-messages ${feedbackPlaceHolder} --sourcepath "${workspaceRootsPlaceHolder}" --line \${lineNumber} "\${file}"`;
   focus = false;
 }
 
@@ -480,7 +516,7 @@ class CodeGenTask extends SysMLTask {
   type = SireumHamrTaskProvider.TYPE;
   taskLabel = `${sysmlTaskLabelPrefix} codegen`;
   command = "${command:org.sireum.hamr.sysml.codegen}";
-  cliArgs = `${sireumScript} hamr sysml codegen --parseable-messages --sourcepath "$workspaceRoots" --line \${lineNumber} --platform ${PickCodeGenTargetCommand.COMMAND} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} hamr sysml codegen --parseable-messages --sourcepath "$workspaceRoots" --line \${lineNumber} --platform ${PickCodeGenTargetCommand.COMMAND} "\${file}"`;
   focus = true;
 }
 
@@ -488,7 +524,7 @@ class CodeGenConfigTask extends SysMLTask {
   type = SireumHamrTaskProvider.TYPE;
   taskLabel = `${sysmlTaskLabelPrefix} config`;
   command = "${command:org.sireum.hamr.sysml.config}";
-  cliArgs = `${sireumScript} hamr sysml config --parseable-messages "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} hamr sysml config --parseable-messages "\${file}"`;
   focus = false;
 }
 
@@ -505,14 +541,14 @@ abstract class SlangScTask extends Task {
 class RunScTask extends SlangScTask {
   taskLabel = `run`;
   command = "${command:org.sireum.slang.run}";
-  cliArgs = `${sireumScript} slang run "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang run "\${file}"`;
   focus = true;
 }
 
 class TipeScTask extends SlangScTask {
   taskLabel = `tipe`;
   command = "${command:org.sireum.slang.tipe}";
-  cliArgs = `${sireumScript} slang tipe --parseable-messages "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang tipe --parseable-messages "\${file}"`;
   focus = false;
 }
 
@@ -523,35 +559,35 @@ abstract class SlangRefactorTask extends SlangScTask {
 class SlangRefactorEnumSymbolTask extends SlangRefactorTask {
   taskLabel = `enum symbols`;
   command = "${command:org.sireum.slang.refactor.enumSymbol}";
-  cliArgs = `${sireumScript} slang refactor --mode enumSymbol ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang refactor --mode enumSymbol ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
 class SlangRefactorInsertValTask extends SlangRefactorTask {
   taskLabel = `insert class field val modifiers`;
   command = "${command:org.sireum.slang.refactor.insertVal}";
-  cliArgs = `${sireumScript} slang refactor --mode insertVal ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang refactor --mode insertVal ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
 class SlangRefactorRenumberProofTask extends SlangRefactorTask {
   taskLabel = `renumber proofs`;
   command = "${command:org.sireum.slang.refactor.renumberProof}";
-  cliArgs = `${sireumScript} slang refactor --mode renumberProof ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang refactor --mode renumberProof ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
 class SlangRefactorReformatProofTask extends SlangRefactorTask {
   taskLabel = `reformat proofs`;
   command = "${command:org.sireum.slang.refactor.reformatProof}";
-  cliArgs = `${sireumScript} slang refactor --mode reformatProof ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang refactor --mode reformatProof ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
 class SlangRefactorExpandInductTask extends SlangRefactorTask {
   taskLabel = `expand @induct`;
   command = "${command:org.sireum.slang.refactor.expandInduct}";
-  cliArgs = `${sireumScript} slang refactor --mode expandInduct ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang refactor --mode expandInduct ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
@@ -562,91 +598,91 @@ abstract class SlangTemplateTask extends SlangScTask {
 class SlangTemplateStepTask extends SlangTemplateTask {
   taskLabel = `insert a regular proof step`;
   command = "${command:org.sireum.slang.template.step}";
-  cliArgs = `${sireumScript} slang template --mode step --line \${lineNumber} ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang template --mode step --line \${lineNumber} ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
 class SlangTemplateAssumeTask extends SlangTemplateTask {
   taskLabel = `insert an assume proof step`;
   command = "${command:org.sireum.slang.template.assume}";
-  cliArgs = `${sireumScript} slang template --mode assume --line \${lineNumber} ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang template --mode assume --line \${lineNumber} ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
 class SlangTemplateAssertTask extends SlangTemplateTask {
   taskLabel = `insert an assert proof step`;
   command = "${command:org.sireum.slang.template.assert}";
-  cliArgs = `${sireumScript} slang template --mode assert --line \${lineNumber} ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang template --mode assert --line \${lineNumber} ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
 class SlangTemplateSubProofTask extends SlangTemplateTask {
   taskLabel = `insert a subproof`;
   command = "${command:org.sireum.slang.template.subproof}";
-  cliArgs = `${sireumScript} slang template --mode subproof --line \${lineNumber} ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang template --mode subproof --line \${lineNumber} ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
 class SlangTemplateSubProofFreshTask extends SlangTemplateTask {
   taskLabel = `insert a let-subproof`;
   command = "${command:org.sireum.slang.template.subproofFresh}";
-  cliArgs = `${sireumScript} slang template --mode subproofFresh --line \${lineNumber} ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang template --mode subproofFresh --line \${lineNumber} ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
 class SlangTemplateForallTask extends SlangTemplateTask {
   taskLabel = `insert a forall quantification`;
   command = "${command:org.sireum.slang.template.forall}";
-  cliArgs = `${sireumScript} slang template --mode forall --line \${lineNumber} --column ${GetColumnCommand.COMMAND} ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang template --mode forall --line \${lineNumber} --column ${GetColumnCommand.COMMAND} ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
 class SlangTemplateExistsTask extends SlangTemplateTask {
   taskLabel = `insert an existensial quantification`;
   command = "${command:org.sireum.slang.template.exists}";
-  cliArgs = `${sireumScript} slang template --mode exists --line \${lineNumber} --column ${GetColumnCommand.COMMAND} ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang template --mode exists --line \${lineNumber} --column ${GetColumnCommand.COMMAND} ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
 class SlangTemplateForallRangeTask extends SlangTemplateTask {
   taskLabel = `insert a forall-range quantification`;
   command = "${command:org.sireum.slang.template.forallRange}";
-  cliArgs = `${sireumScript} slang template --mode forallRange --line \${lineNumber} --column ${GetColumnCommand.COMMAND} ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang template --mode forallRange --line \${lineNumber} --column ${GetColumnCommand.COMMAND} ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
 class SlangTemplateExistsRangeTask extends SlangTemplateTask {
   taskLabel = `insert an existensial-in-range quantification`;
   command = "${command:org.sireum.slang.template.existsRange}";
-  cliArgs = `${sireumScript} slang template --mode existsRange --line \${lineNumber} --column ${GetColumnCommand.COMMAND} ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang template --mode existsRange --line \${lineNumber} --column ${GetColumnCommand.COMMAND} ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
 class SlangTemplateForallElementsTask extends SlangTemplateTask {
   taskLabel = `insert a forall-elements quantification`;
   command = "${command:org.sireum.slang.template.forallElements}";
-  cliArgs = `${sireumScript} slang template --mode forallElements --line \${lineNumber} --column ${GetColumnCommand.COMMAND} ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang template --mode forallElements --line \${lineNumber} --column ${GetColumnCommand.COMMAND} ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
 class SlangTemplateExistsElementsTask extends SlangTemplateTask {
   taskLabel = `insert an existensial-element quantification`;
   command = "${command:org.sireum.slang.template.existsElements}";
-  cliArgs = `${sireumScript} slang template --mode existsElements --line \${lineNumber} --column ${GetColumnCommand.COMMAND} ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang template --mode existsElements --line \${lineNumber} --column ${GetColumnCommand.COMMAND} ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
 class SlangTemplateForallIndicesTask extends SlangTemplateTask {
   taskLabel = `insert a forall-indices quantification`;
   command = "${command:org.sireum.slang.template.forallIndices}";
-  cliArgs = `${sireumScript} slang template --mode forallIndices --line \${lineNumber} --column ${GetColumnCommand.COMMAND} ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang template --mode forallIndices --line \${lineNumber} --column ${GetColumnCommand.COMMAND} ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
 class SlangTemplateExistsIndicesTask extends SlangTemplateTask {
   taskLabel = `insert an existensial-index quantification`;
   command = "${command:org.sireum.slang.template.existsIndices}";
-  cliArgs = `${sireumScript} slang template --mode existsIndices --line \${lineNumber} --column ${GetColumnCommand.COMMAND} ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} slang template --mode existsIndices --line \${lineNumber} --column ${GetColumnCommand.COMMAND} ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
@@ -663,14 +699,14 @@ class LogikaScFileTask extends LogikaScTask {
   fileExtensions = ["sc", "logika"];
   taskLabel = `${logikaTaskLabelPrefix} (file)`;
   command = "${command:org.sireum.logika.verifier.file}";
-  cliArgs = `${sireumScript} logika verifier --parseable-messages --log-detailed-info ${feedbackPlaceHolder} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} logika verifier --parseable-messages --log-detailed-info ${feedbackPlaceHolder} "\${file}"`;
   focus = false;
 }
 
 class LogikaScLineTask extends LogikaScTask {
   taskLabel = `${logikaTaskLabelPrefix} (line)`;
   command = "${command:org.sireum.logika.verifier.line}";
-  cliArgs = `${sireumScript} logika verifier --parseable-messages --log-detailed-info ${feedbackPlaceHolder} --line \${lineNumber} "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} logika verifier --parseable-messages --log-detailed-info ${feedbackPlaceHolder} --line \${lineNumber} "\${file}"`;
   focus = false;
 }
 
@@ -862,6 +898,7 @@ export const logikaTasks: Task[] = [
 ];
 
 export const commands: Command<any>[] = [
+  new SireumScriptCommand(),
   new InsertSlangSymbolCommand(),
   new GetColumnCommand(),
   new PickCodeGenTargetCommand(),

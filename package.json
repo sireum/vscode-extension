@@ -20,6 +20,18 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": [
+      {
+        "title": "Sireum",
+        "properties": {
+          "sireum.home": {
+            "type": "string",
+            "default": "",
+            "description": "Sireum home folder path"    
+          }
+        }
+      }
+    ],
     "problemPatterns": [
       {
         "name": "sireumProblemPattern",
