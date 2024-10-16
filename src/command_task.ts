@@ -128,7 +128,7 @@ class PickCodeGenTargetCommand extends Command<string> {
   command = PickCodeGenTargetCommand.COMMAND;
   run(context: vscode.ExtensionContext, workspaceRoots: string): any {
     const pick = vscode.window.showQuickPick(
-      ["JVM", "Linux", "Cygwin", "macOS", "seL4", "seL4_Only", "seL4_TB", "Microkit", "ros2"],
+      ["JVM", "Linux", "Cygwin", "MacOS", "seL4", "seL4_Only", "seL4_TB", "Microkit", "ros2"],
       { title: "HAMR CodeGen Target", canPickMany: false }
     );
     return pick;
