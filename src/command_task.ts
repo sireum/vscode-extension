@@ -524,7 +524,7 @@ class CodeGenConfigTask extends SysMLTask {
   type = SireumHamrTaskProvider.TYPE;
   taskLabel = `${sysmlTaskLabelPrefix} config`;
   command = "${command:org.sireum.hamr.sysml.config}";
-  cliArgs = `${SireumScriptCommand.COMMAND} hamr sysml config --parseable-messages "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} hamr sysml config "\${file}"`;
   focus = false;
 }
 
@@ -693,6 +693,14 @@ abstract class LogikaScTask extends FeedbackTask {
     super.post(context, e);
     vscode.window.showInformationMessage(e.exitCode == 0? "Logika verified" : "Ill-formed program");
   }
+}
+
+class LogikaConfigScTask extends LogikaScTask {
+  type = SireumHamrTaskProvider.TYPE;
+  taskLabel = `config`;
+  command = "${command:org.sireum.logika.config}";
+  cliArgs = `${SireumScriptCommand.COMMAND} logika config "\${file}"`;
+  focus = false;
 }
 
 class LogikaScFileTask extends LogikaScTask {
@@ -893,6 +901,7 @@ export const slangTemplateTasks: Task[] = [
 ];
 
 export const logikaTasks: Task[] = [
+  new LogikaConfigScTask(),
   new LogikaScFileTask(),
   new LogikaScLineTask()
 ];
