@@ -984,10 +984,12 @@ object build extends ScalaModule {
 }`;
 
         fsJs.writeFileSync(buildMill, buildMillContent);
-        fsJs.writeFileSync(dotSireumVer, stdout);
   
         vscode.commands.executeCommand("metals.build-import").then(
-          () => fsJs.unlinkSync(buildMill)
+          () => {
+            fsJs.unlinkSync(buildMill);
+            fsJs.writeFileSync(dotSireumVer, stdout);
+          }
         );
       }
     });
