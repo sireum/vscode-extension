@@ -34,6 +34,11 @@ export function activate(context: vscode.ExtensionContext) {
   const workspaceRoots = workspaceFolders
     .map((f) => f.uri.fsPath)
     .join(ct.psep);
+  for (const f of workspaceFolders) {
+    const dotSireum = vscode.Uri.joinPath(f.uri, ".sireum");
+    const stat = vscode.workspace.fs.stat(dotSireum);
+    stat.then(value => { ct.importBuild(f.uri.fsPath, false); });
+  }
   const ctMap = new Map<string, ct.Task>();
   ct.sireumTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
   ct.slangTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));

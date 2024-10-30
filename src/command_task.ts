@@ -23,7 +23,10 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 import * as vscode from "vscode";
-import fs = require("fs");
+import fsJs = require("fs");
+import spawnJs = require("child_process");
+import osJs = require("os");
+import pathJs = require("path");
 
 const tmp = require("tmp");
 
@@ -53,34 +56,26 @@ class SireumScriptCommand extends Command<Promise<string | undefined>> {
   static COMMAND = "${command:org.sireum.script}";
   command = SireumScriptCommand.COMMAND;
   async run(context: vscode.ExtensionContext, workspaceRoots: string): Promise<string | undefined> {
-    let sireumHome = process.env.SIREUM_HOME;
-    let update = false;
-    if (!sireumHome) {
-      update = true;
-      sireumHome = vscode.workspace.getConfiguration(sireumKey).get("home");
-    }
-    let r = `${sireumHome}${sireumScriptSuffix}`
-    while (!fs.existsSync(r)) {
-      update = true;
-      vscode.window.showInformationMessage("Please select Sireum's home folder path");
-      const uris = await vscode.window.showOpenDialog({
-        title: "Select Sireum home directory",
-        openLabel: "Select",
-        canSelectFiles: false,
-        canSelectFolders: true,
-        canSelectMany: false,
-      });
-      if (uris) {
-        sireumHome = uris[0].fsPath
-        r = `${sireumHome}${sireumScriptSuffix}`;
-      } else {
-        return undefined;
+    return getSireum();
+  }
+}
+
+class SireumImportCommand extends Command<Promise<undefined | string>> {
+  static COMMAND = "${command:org.sireum.import}";
+  command = SireumImportCommand.COMMAND;
+  async run(context: vscode.ExtensionContext, workspaceRoots: string): Promise<undefined | string> {
+    const workspaceFolders =
+    vscode.workspace.workspaceFolders &&
+    vscode.workspace.workspaceFolders.length > 0
+      ? vscode.workspace.workspaceFolders
+      : [];
+    for (const f of workspaceFolders) {
+      const r = await importBuild(f.uri.fsPath, true);
+      if (r) {
+        return r;
       }
-    }
-    if (update) {
-      vscode.workspace.getConfiguration(sireumKey).update("home", sireumHome, vscode.ConfigurationTarget.Global);
-    }
-    return `"${r}"`;
+    } 
+    return undefined;
   }
 }
 
@@ -201,17 +196,10 @@ class InstallFonts extends InstallTask {
   focus = true;
 }
 
-class InstallDeps extends InstallTask {
-  taskLabel = "--init";
-  command = "${command:org.sireum.install.deps}";
-  cliArgs = `${SireumScriptCommand.COMMAND} --init`;
-  focus = true;
-}
-
-class InstallIve extends InstallTask {
-  taskLabel = "--setup";
-  command = "${command:org.sireum.install.ive}";
-  cliArgs = `${SireumScriptCommand.COMMAND} --setup`;
+class ImportProject extends InstallTask {
+  taskLabel = "import project";
+  command = "${command:org.sireum.import.project}";
+  cliArgs = `${SireumImportCommand.COMMAND}`;
   focus = true;
 }
 
@@ -436,7 +424,7 @@ abstract class FeedbackTask extends Task {
     const i = cliArgs.indexOf('"', cliArgs.indexOf("--feedback"));
     const j = cliArgs.indexOf('"', i + 1);
     this.feedback = cliArgs.substring(i + 1, j);
-    const watcher = fs.promises.watch(this.feedback!, {
+    const watcher = fsJs.promises.watch(this.feedback!, {
       recursive: true,
       signal: this.ac.signal,
     });
@@ -444,7 +432,7 @@ abstract class FeedbackTask extends Task {
       for await (const e of watcher) {
         if (e.filename) {
           const o = JSON.parse(
-            fs.readFileSync(`${this.feedback}${fsep}${e.filename!}`, "utf8")
+            fsJs.readFileSync(`${this.feedback}${fsep}${e.filename!}`, "utf8")
           );
           if (!o.pos) {
             o.pos = o.posOpt.value;
@@ -479,7 +467,7 @@ abstract class FeedbackTask extends Task {
   post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {
     this.ac.abort();
     if (this.feedback)
-      fs.promises
+      fsJs.promises
         .rm(this.feedback!, { recursive: true, force: true })
         .catch((e) => {});
     this.ac = new AbortController();
@@ -858,8 +846,7 @@ export class SireumLogikaTaskProvider implements vscode.TaskProvider {
 
 export const sireumTasks: Task[] = [
   new InstallFonts(),
-  new InstallDeps(),
-  new InstallIve(),
+  new ImportProject(),
 ];
 
 export const hamrTasks: Task[] = [
@@ -907,6 +894,7 @@ export const logikaTasks: Task[] = [
 ];
 
 export const commands: Command<any>[] = [
+  new SireumImportCommand(),
   new SireumScriptCommand(),
   new InsertSlangSymbolCommand(),
   new GetColumnCommand(),
@@ -919,3 +907,95 @@ export const commands: Command<any>[] = [
   ...hamrTasks,
   ...logikaTasks,
 ];
+
+async function getSireum(): Promise<string | undefined> {
+  let sireumHome = process.env.SIREUM_HOME;
+  let update = false;
+  if (!sireumHome) {
+    update = true;
+    sireumHome = vscode.workspace.getConfiguration(sireumKey).get("home");
+  }
+  let r = `${sireumHome}${sireumScriptSuffix}`
+  while (!fsJs.existsSync(r)) {
+    update = true;
+    vscode.window.showInformationMessage("Please select Sireum's home folder path");
+    const uris = await vscode.window.showOpenDialog({
+      title: "Select Sireum home directory",
+      openLabel: "Select",
+      canSelectFiles: false,
+      canSelectFolders: true,
+      canSelectMany: false,
+    });
+    if (uris) {
+      sireumHome = uris[0].fsPath
+      r = `${sireumHome}${sireumScriptSuffix}`;
+    } else {
+      return undefined;
+    }
+  }
+  if (update) {
+    vscode.workspace.getConfiguration(sireumKey).update("home", sireumHome, vscode.ConfigurationTarget.Global);
+  }
+  return `"${r}"`;
+}
+
+
+export async function importBuild(path: string, force: boolean): Promise<string | undefined> {
+  const sireum = await getSireum();
+  if (!sireum) {
+    return undefined;
+  }
+  const sireumHome = pathJs.dirname(pathJs.dirname(sireum.slice(1, -1)));
+  const dotSireum = `${path}${fsep}.sireum`
+  const binProject = `${path}${fsep}bin${fsep}project.cmd`
+
+  if (!force && fsJs.existsSync(dotSireum)) {
+    const dotSireumVer = `${dotSireum}.ver`
+    if (!fsJs.existsSync(dotSireumVer)) {
+      fsJs.writeFileSync(dotSireumVer, "");
+    }
+    spawnJs.exec(`${sireum} --sha`, (error, stdout, stderr) => {
+      if (!error) {
+        const ver = fsJs.readFileSync(dotSireumVer, "utf-8");
+        if (!force && stdout == ver) {
+          return undefined;
+        }
+        const versionsProp = `${sireumHome}${fsep}versions.properties`;
+        const versions = fsJs.readFileSync(versionsProp, "utf-8");
+        const scalaLibraryVersionPrefix = "org.scala-lang%scala-library%=";
+        const i = versions.indexOf(scalaLibraryVersionPrefix);
+        const scalaVersion = versions.substring(i + scalaLibraryVersionPrefix.length, versions.indexOf('\n', i + 1)).trim();
+        const buildMill = `${path}${fsep}build.mill`;
+        const m2 = `${osJs.homedir}${fsep}.m2${fsep}repository`;
+        const buildMillContent =
+`package build
+
+import mill._, scalalib._
+
+object build extends ScalaModule {
+  def scalaVersion = "${scalaVersion}"
+  def ivyDeps = Agg(
+    ivy"org.sireum.kekinian::library:${stdout.substring(0, 10)}"
+  )
+  def repositoriesTask = T.task { super.repositoriesTask() :+ 
+    coursier.maven.MavenRepository("${vscode.Uri.file(m2).toString()}") :+
+    coursier.maven.MavenRepository("https://jitpack.io")
+  }
+}`;
+
+        fsJs.writeFileSync(buildMill, buildMillContent);
+        fsJs.writeFileSync(dotSireumVer, stdout);
+  
+        vscode.commands.executeCommand("metals.build-import").then(
+          () => fsJs.unlinkSync(buildMill)
+        );
+      }
+    });
+  } else if (force && fsJs.existsSync(binProject)) {
+    const r = `${sireum} proyek export "${path}"`;
+    return r;
+  } else {
+    vscode.window.showErrorMessage(`Requires ${binProject}`);
+  }
+  return undefined;
+}
