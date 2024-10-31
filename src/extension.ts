@@ -36,8 +36,24 @@ export function activate(context: vscode.ExtensionContext) {
     .join(ct.psep);
   for (const f of workspaceFolders) {
     const dotSireum = vscode.Uri.joinPath(f.uri, ".sireum");
-    const stat = vscode.workspace.fs.stat(dotSireum);
-    stat.then(value => { ct.importBuild(f.uri.fsPath, false); });
+    vscode.workspace.fs.stat(dotSireum).then(_ => { 
+      ct.importBuild(f.uri.fsPath, false); 
+    }, () => {
+      const binProject = vscode.Uri.joinPath(f.uri, "bin", "project.cmd");
+      vscode.workspace.fs.stat(binProject).then (_ => {
+        const bloop = vscode.Uri.joinPath(f.uri, ".bloop");
+        vscode.workspace.fs.stat(bloop).then(_ => {}, _ => {
+            vscode.window.showInformationMessage("Import Proyek?", "Yes", "No").then(async value => {
+              if (value == "Yes") {
+                if (await ct.importBuild(f.uri.fsPath, true)) {
+                  vscode.tasks.executeTask(ct.getTask(ct.importProjectTask.type, 
+                    ct.importProjectTask.taskLabel, ct.importProjectTask.command, ct.importProjectTask.focus));
+                }
+              }
+            });
+          });
+      });
+    });
   }
   const ctMap = new Map<string, ct.Task>();
   ct.sireumTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));

@@ -844,9 +844,11 @@ export class SireumLogikaTaskProvider implements vscode.TaskProvider {
   }
 }
 
+export const importProjectTask: Task =  new ImportProject();
+
 export const sireumTasks: Task[] = [
   new InstallFonts(),
-  new ImportProject(),
+  importProjectTask
 ];
 
 export const hamrTasks: Task[] = [

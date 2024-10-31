@@ -18,7 +18,8 @@
     "Programming Languages"
   ],
   "activationEvents": [
-    "workspaceContains:.sireum"
+    "workspaceContains:.sireum",
+    "workspaceContains:bin/project.cmd"
   ],  
 "main": "./out/extension.js",
   "contributes": {
