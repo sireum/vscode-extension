@@ -118,6 +118,18 @@ class GetColumnCommand extends Command<string> {
   }
 }
 
+class GetActiveThemeCommand extends Command<string> {
+  static COMMAND = "${command:org.sireum.theme}";
+  command = GetActiveThemeCommand.COMMAND;
+  run(context: vscode.ExtensionContext, workspaceRoots: string): string {
+    switch (vscode.window.activeColorTheme.kind) {
+      case vscode.ColorThemeKind.HighContrast:
+      case vscode.ColorThemeKind.Dark: return "dark";
+      default: return "light";
+    }
+  }
+}
+
 class PickCodeGenTargetCommand extends Command<string> {
   static COMMAND = "${command:org.sireum.hamr.codegen.pickTarget}";
   command = PickCodeGenTargetCommand.COMMAND;
@@ -517,7 +529,7 @@ class CodeGenConfigTask extends SysMLTask {
   type = SireumHamrTaskProvider.TYPE;
   taskLabel = `${sysmlTaskLabelPrefix} config`;
   command = "${command:org.sireum.hamr.sysml.config}";
-  cliArgs = `${SireumScriptCommand.COMMAND} hamr sysml config "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} hamr sysml config --theme ${GetActiveThemeCommand.COMMAND} "\${file}"`;
   focus = false;
 }
 
@@ -692,8 +704,10 @@ class LogikaConfigScTask extends LogikaScTask {
   type = SireumHamrTaskProvider.TYPE;
   taskLabel = `config`;
   command = "${command:org.sireum.logika.config}";
-  cliArgs = `${SireumScriptCommand.COMMAND} logika config "\${file}"`;
+  cliArgs = `${SireumScriptCommand.COMMAND} logika config --theme ${GetActiveThemeCommand.COMMAND} "\${file}"`;
   focus = false;
+  post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {
+  }
 }
 
 class LogikaScFileTask extends LogikaScTask {
@@ -905,6 +919,7 @@ export const commands: Command<any>[] = [
   new SireumScriptCommand(),
   new InsertSlangSymbolCommand(),
   new GetColumnCommand(),
+  new GetActiveThemeCommand(),
   new PickCodeGenTargetCommand(),
   new LogikaClearCommand(),
   ...sireumTasks,
