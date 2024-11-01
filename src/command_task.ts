@@ -201,6 +201,11 @@ class ImportProject extends InstallTask {
   command = "${command:org.sireum.import.project}";
   cliArgs = `${SireumImportCommand.COMMAND}`;
   focus = true;
+  post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {
+    if (e.exitCode == 0) {
+      vscode.commands.executeCommand("metals.restartServer");
+    }
+  }
 }
 
 abstract class SysMLTask extends Task {
@@ -956,49 +961,20 @@ export async function importBuild(path: string, force: boolean): Promise<string 
     if (!fsJs.existsSync(dotSireumVer)) {
       fsJs.writeFileSync(dotSireumVer, "");
     }
-    spawnJs.exec(`${sireum} --sha`, async (error, stdout, stderr) => {
-      if (!error) {
-        const ver = fsJs.readFileSync(dotSireumVer, "utf-8");
-        if (stdout == ver) {
-          return undefined;
-        }
-        const reimport = "Yes" == await vscode.window.showInformationMessage("Sireum version has changed. Reimport?", "Yes", "No");
-        if (!reimport) {
-          return undefined;
-        }
-        const versionsProp = `${sireumHome}${fsep}versions.properties`;
-        const versions = fsJs.readFileSync(versionsProp, "utf-8");
-        const scalaLibraryVersionPrefix = "org.scala-lang%scala-library%=";
-        const i = versions.indexOf(scalaLibraryVersionPrefix);
-        const scalaVersion = versions.substring(i + scalaLibraryVersionPrefix.length, versions.indexOf('\n', i + 1)).trim();
-        const buildMill = `${path}${fsep}build.mill`;
-        const m2 = `${osJs.homedir}${fsep}.m2${fsep}repository`;
-        const buildMillContent =
-`package build
-
-import mill._, scalalib._
-
-object build extends ScalaModule {
-  def scalaVersion = "${scalaVersion}"
-  def ivyDeps = Agg(
-    ivy"org.sireum.kekinian::library:${stdout.substring(0, 10)}"
-  )
-  def repositoriesTask = T.task { super.repositoriesTask() :+ 
-    coursier.maven.MavenRepository("${vscode.Uri.file(m2).toString()}") :+
-    coursier.maven.MavenRepository("https://jitpack.io")
-  }
-}`;
-
-        fsJs.writeFileSync(buildMill, buildMillContent);
-  
-        vscode.commands.executeCommand("metals.build-import").then(
-          () => {
-            fsJs.unlinkSync(buildMill);
-            fsJs.writeFileSync(dotSireumVer, stdout);
-          }
-        );
+    try { 
+      const stdout = spawnJs.execSync(`${sireum} --sha`, { encoding: "utf-8" }) 
+      const ver = fsJs.readFileSync(dotSireumVer, "utf-8");
+      if (stdout.trim() == ver.trim()) {
+        return undefined;
       }
-    });
+      const reimport = "Yes" == await vscode.window.showInformationMessage("Sireum version has changed. Reimport?", "Yes", "No");
+      if (!reimport) {
+        return undefined;
+      }
+      const r = `${sireum} proyek export "${path}"`;
+      return r;
+    } catch (e) {
+    }
   } else if (force && fsJs.existsSync(binProject)) {
     const r = `${sireum} proyek export "${path}"`;
     return r;
