@@ -6,3 +6,4 @@
 Integrated tools:
 
 * HAMR SysMLv2 front-end and code generator
+* Logika Slang script verifier
