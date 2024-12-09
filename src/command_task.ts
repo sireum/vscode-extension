@@ -974,17 +974,16 @@ export async function importBuild(path: string, force: boolean): Promise<string 
 
   if (fsJs.existsSync(dotSireum)) {
     const dotSireumVer = `${dotSireum}.ver`
-    if (!fsJs.existsSync(dotSireumVer)) {
-      fsJs.writeFileSync(dotSireumVer, "");
-    }
     try { 
       const stdout = spawnJs.execSync(`${sireum} --sha`, { encoding: "utf-8" }) 
-      const ver = fsJs.readFileSync(dotSireumVer, "utf-8");
-      if (stdout.trim() == ver.trim()) {
+      const dotSireumVerExist = fsJs.existsSync(dotSireumVer);
+      if (dotSireumVerExist && stdout.trim() == fsJs.readFileSync(dotSireumVer, "utf-8").trim()) {
         return undefined;
       }
       if (!force) {
-        const reimport = "Yes" == await vscode.window.showInformationMessage("Sireum version has changed. Reimport?", "Yes", "No");
+        const reimport = "Yes" == await vscode.window.showInformationMessage(
+          dotSireumVerExist? "Sireum version has changed. Reimport?" : "Import Sireum project?", 
+          "Yes", "No");
         if (!reimport) {
           return undefined;
         }
