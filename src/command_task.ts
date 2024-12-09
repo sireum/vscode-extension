@@ -83,7 +83,7 @@ class InsertSlangSymbolCommand extends Command<void> {
   static COMMAND = "${command:org.sireum.editor.symbol}";
   command = InsertSlangSymbolCommand.COMMAND;
   async run(context: vscode.ExtensionContext, workspaceRoots: string): Promise<void> {
-    const pick = await vscode.window.showQuickPick(
+    let pick = await vscode.window.showQuickPick(
       [ "__>:  (implication)", 
         "___>:  (short-circuit implication)", 
         "∀  (forall/universal quantifier)", 
@@ -104,6 +104,7 @@ class InsertSlangSymbolCommand extends Command<void> {
       return;
     }
     const selection = editor.selection;
+    pick = pick.substring(0, pick.indexOf("(")).trim();
     editor!.edit(editBuilder => {
       editBuilder.replace(selection, pick.toString());
     }); 
