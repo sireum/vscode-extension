@@ -972,7 +972,7 @@ export async function importBuild(path: string, force: boolean): Promise<string 
   const dotSireum = `${path}${fsep}.sireum`
   const binProject = `${path}${fsep}bin${fsep}project.cmd`
 
-  if (!force && fsJs.existsSync(dotSireum)) {
+  if (fsJs.existsSync(dotSireum)) {
     const dotSireumVer = `${dotSireum}.ver`
     if (!fsJs.existsSync(dotSireumVer)) {
       fsJs.writeFileSync(dotSireumVer, "");
@@ -983,9 +983,11 @@ export async function importBuild(path: string, force: boolean): Promise<string 
       if (stdout.trim() == ver.trim()) {
         return undefined;
       }
-      const reimport = "Yes" == await vscode.window.showInformationMessage("Sireum version has changed. Reimport?", "Yes", "No");
-      if (!reimport) {
-        return undefined;
+      if (!force) {
+        const reimport = "Yes" == await vscode.window.showInformationMessage("Sireum version has changed. Reimport?", "Yes", "No");
+        if (!reimport) {
+          return undefined;
+        }
       }
       const r = `${sireum} proyek export "${path}"`;
       return r;
