@@ -23,6 +23,208 @@
   ],  
 "main": "./out/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "org.sireum.slang.tipe",
+        "title": "Slang type check"
+      },
+      {
+        "command": "org.sireum.slang.run",
+        "title": "Run Slang script"
+      },
+      {
+        "command": "org.sireum.slang.refactor.renumberProof",
+        "title": "Renumber Slang proof steps"
+      },
+      {
+        "command": "org.sireum.slang.refactor.reformatProof",
+        "title": "Reformat Slang proofs"
+      },
+      {
+        "command": "org.sireum.slang.refactor.expandInduct",
+        "title": "Expand Slang @induct"
+      },
+      {
+        "command": "org.sireum.slang.template.step",
+        "title": "Insert a regular Slang proof step"
+      },
+      {
+        "command": "org.sireum.slang.template.assume",
+        "title": "Insert an assume Slang proof step"
+      },
+      {
+        "command": "org.sireum.slang.template.assert",
+        "title": "Insert an assert Slang proof step"
+      },
+      {
+        "command": "org.sireum.slang.template.subproof",
+        "title": "Insert a Slang subproof step"
+      },
+      {
+        "command": "org.sireum.slang.template.subproofFresh",
+        "title": "Insert a Slang let-subproof step"
+      },
+      {
+        "command": "org.sireum.slang.template.forall",
+        "title": "Insert a forall quantification"
+      },
+      {
+        "command": "org.sireum.slang.template.exists",
+        "title": "Insert a forall quantification"
+      },
+      {
+        "command": "org.sireum.logika.config",
+        "title": "Logika Configurator"
+      },
+      {
+        "command": "org.sireum.logika.verifier.file",
+        "title": "Logika Check (All in File)"
+      },
+      {
+        "command": "org.sireum.logika.verifier.line",
+        "title": "Logika Check (Line)"
+      },
+      {
+        "command": "org.sireum.hamr.sysml.tipe",
+        "title": "HAMR SysML Type Check"
+      },
+      {
+        "command": "org.sireum.hamr.sysml.config",
+        "title": "HAMR SysML CodeGen Configurator"
+      },
+      {
+        "command": "org.sireum.hamr.sysml.codegen",
+        "title": "HAMR SysML CodeGen"
+      },
+      {
+        "command": "org.sireum.hamr.sysml.logika.file",
+        "title": "HAMR SysML Logika Check (All in File)"
+      },
+      {
+        "command": "org.sireum.hamr.sysml.logika.line",
+        "title": "HAMR SysML Logika Check (Line)"
+      },
+      {
+        "command": "org.sireum.hamr.sysml.logika.all",
+        "title": "HAMR SysML Logika Check (All)"
+      },
+      {
+        "command": "org.sireum.editor.symbol",
+        "title": "Insert Slang Symbol"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "org.sireum.slang.tipe",
+        "key": "ctrl+shift+x",
+        "mac": "cmd+shift+x"
+      },
+      {
+        "command": "org.sireum.slang.run",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r"
+      },
+      {
+        "command": "org.sireum.slang.refactor.renumberProof",
+        "key": "ctrl+shift+' n",
+        "mac": "cmd+shift+' n"
+      },
+      {
+        "command": "org.sireum.slang.refactor.reformatProof",
+        "key": "ctrl+shift+' f",
+        "mac": "cmd+shift+' f"
+      },
+      {
+        "command": "org.sireum.slang.refactor.expandInduct",
+        "key": "ctrl+shift+' 2",
+        "mac": "cmd+shift+' 2"
+      },
+      {
+        "command": "org.sireum.slang.template.step",
+        "key": "ctrl+shift+\\ r",
+        "mac": "cmd+shift+\\ r"
+      },
+      {
+        "command": "org.sireum.slang.template.assume",
+        "key": "ctrl+shift+\\ u",
+        "mac": "cmd+shift+\\ u"
+      },
+      {
+        "command": "org.sireum.slang.template.assert",
+        "key": "ctrl+shift+\\ t",
+        "mac": "cmd+shift+\\ t"
+      },
+      {
+        "command": "org.sireum.slang.template.subproof",
+        "key": "ctrl+shift+\\ s",
+        "mac": "cmd+shift+\\ s"
+      },
+      {
+        "command": "org.sireum.slang.template.subproofFresh",
+        "key": "ctrl+shift+\\ f",
+        "mac": "cmd+shift+\\ f"
+      },
+      {
+        "command": "org.sireum.slang.template.forall",
+        "key": "ctrl+shift+\\ a",
+        "mac": "cmd+shift+\\ a"
+      },
+      {
+        "command": "org.sireum.slang.template.exists",
+        "key": "ctrl+shift+\\ e",
+        "mac": "cmd+shift+\\ e"
+      },
+      {
+        "command": "org.sireum.logika.config",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c"
+      },
+      {
+        "command": "org.sireum.logika.verifier.file",
+        "key": "ctrl+shift+w",
+        "mac": "cmd+shift+w"
+      },
+      {
+        "command": "org.sireum.logika.verifier.line",
+        "key": "ctrl+shift+s",
+        "mac": "cmd+shift+s"
+      },
+      {
+        "command": "org.sireum.hamr.sysml.tipe",
+        "key": "ctrl+alt+x",
+        "mac": "cmd+ctrl+x"
+      },
+      {
+        "command": "org.sireum.hamr.sysml.logika.file",
+        "key": "ctrl+alt+w",
+        "mac": "cmd+ctrl+w"
+      },
+      {
+        "command": "org.sireum.hamr.sysml.logika.line",
+        "key": "ctrl+alt+s",
+        "mac": "cmd+ctrl+s"
+      },
+      {
+        "command": "org.sireum.hamr.sysml.logika.all",
+        "key": "ctrl+alt+a",
+        "mac": "cmd+ctrl+a"
+      },
+      {
+        "command": "org.sireum.hamr.sysml.config",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c"
+      },
+      {
+        "command": "org.sireum.hamr.sysml.codegen",
+        "key": "ctrl+shift+g",
+        "mac": "cmd+shift+g"
+      },
+      {
+        "command": "org.sireum.editor.symbol",
+        "key": "ctrl+shift+i",
+        "mac": "cmd+shift+i"
+      }
+    ],
     "configuration": [
       {
         "title": "Sireum",

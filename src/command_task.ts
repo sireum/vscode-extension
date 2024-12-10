@@ -291,7 +291,7 @@ function decorate(
   p![1].push({
     range: new vscode.Range(
       new vscode.Position(beginLine, beginColumn),
-      new vscode.Position(endLine, endColumn)
+      new vscode.Position(endLine, endColumn + 1)
     ),
     hoverMessage: hoverText? new vscode.MarkdownString(`~~~raw~~~\n${hoverText}`) : undefined,
   });
