@@ -456,7 +456,13 @@ abstract class FeedbackTask extends Task {
             o.pos = o.posOpt.value;
           }
           vscode.window.visibleTextEditors.forEach((e) => {
-            if (e.document.uri == o.pos.uriOpt.value) {
+            let editorUri = e.document.uri.toString();
+            let fileUri = o.pos.uriOpt.value;
+            if (isWindows) {
+              editorUri = editorUri.replaceAll("%3A", ":").toUpperCase();
+              fileUri = fileUri.toUpperCase();
+            }            
+            if (editorUri == fileUri) {
               switch (o.type) {
                 case "Logika.Verify.Smt2Query":
                   this.processSmt2Query(context, e, o);
@@ -483,12 +489,15 @@ abstract class FeedbackTask extends Task {
     })().catch((e) => {});
   }
   post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {
-    this.ac.abort();
-    if (this.feedback)
-      fsJs.promises
-        .rm(this.feedback!, { recursive: true, force: true })
-        .catch((e) => {});
+    const lac = this.ac;
     this.ac = new AbortController();
+    new Promise(resolve => setTimeout(resolve, 10000)).then(() => {
+      lac.abort();
+      if (this.feedback)
+        fsJs.promises
+          .rm(this.feedback!, { recursive: true, force: true })
+          .catch((e) => {});
+    });
   }
 }
 
@@ -737,7 +746,7 @@ export function getTask(
     vscode.TaskScope.Workspace,
     kind,
     type,
-    new vscode.ShellExecution(args),
+    isWindows? new vscode.ShellExecution(args, { executable: "cmd.exe", shellArgs: ["/D", "/C"]}) : new vscode.ShellExecution(args),
     ["$sireumProblemMatcher"]
   );
   t.presentationOptions = {
@@ -932,11 +941,11 @@ export const commands: Command<any>[] = [
 ];
 
 async function getSireum(): Promise<string | undefined> {
-  let sireumHome = process.env.SIREUM_HOME;
+  let sireumHome = vscode.workspace.getConfiguration(sireumKey).get("home");
   let update = false;
   if (!sireumHome) {
     update = true;
-    sireumHome = vscode.workspace.getConfiguration(sireumKey).get("home");
+    sireumHome = process.env.SIREUM_HOME;
   }
   let r = `${sireumHome}${sireumScriptSuffix}`
   while (!fsJs.existsSync(r)) {
