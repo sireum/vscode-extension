@@ -24,6 +24,7 @@
  */
 import * as vscode from "vscode";
 import * as ct from "./command_task";
+import fsJs = require("fs");
 
 export function activate(context: vscode.ExtensionContext) {
   const workspaceFolders =
@@ -44,6 +45,8 @@ export function activate(context: vscode.ExtensionContext) {
       }
     });
   }
+
+  ct.init(context);
   const ctMap = new Map<string, ct.Task>();
   ct.sireumTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
   ct.slangTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
@@ -89,3 +92,8 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.tasks.registerTaskProvider(ct.SireumLogikaTaskProvider.TYPE, taskProvider)
   );
 }
+
+export function deactivate(context: vscode.ExtensionContext) {
+  ct.ac.abort();
+}
+

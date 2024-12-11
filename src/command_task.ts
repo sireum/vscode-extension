@@ -41,6 +41,64 @@ const workspaceRootsPlaceHolder = "$workspaceRoots";
 const currentFilePlaceHolder = "$currentFile";
 const sireumKey = "sireum";
 const sireumScriptSuffix = isWindows? `\\bin\\sireum.bat` : `/bin/sireum`;
+export let ac: AbortController = new AbortController();
+const feedbackDir = pathWs(tmp.dirSync().name);
+let decorations: Map<
+  string,
+  [vscode.TextEditorDecorationType, vscode.DecorationOptions[]]
+>;
+let linesMap: Map<string, Set<number>>;
+
+
+export function init(context: vscode.ExtensionContext) {
+  ac = new AbortController();
+  const watcher = fsJs.promises.watch(feedbackDir, {
+    recursive: true,
+    signal: ac.signal,
+  });
+  (async () => {
+    for await (const e of watcher) {
+      if (e.filename) {
+        const o = JSON.parse(
+          fsJs.readFileSync(`${feedbackDir}${fsep}${e.filename!}`, "utf8")
+        );
+        fsJs.unlink(e.filename, _ => {});
+        if (!o.pos) {
+          o.pos = o.posOpt.value;
+        }
+        vscode.window.visibleTextEditors.forEach((editor) => {
+          let editorUri = editor.document.uri.toString();
+          let fileUri = o.pos.uriOpt.value;
+          if (isWindows) {
+            editorUri = editorUri.replaceAll("%3A", ":").toUpperCase();
+            fileUri = fileUri.toUpperCase();
+          }            
+          if (editorUri == fileUri) {
+            switch (o.type) {
+              case "Logika.Verify.Smt2Query":
+                processSmt2Query(context, editor, o);
+                break;
+              case "Logika.Verify.Info":
+                processInfo(context, editor, o);
+                break;
+              case "Logika.Verify.State":
+                processState(context, editor, o);
+                break;
+              case "Analysis.Coverage":
+                processCoverage(editor, o);
+                break;
+              case "Report":
+                processReport(editor, o);
+                break;
+              default:
+                console.log(o);
+            }
+          }
+        });
+      }
+    }
+  })().catch((e) => {});
+}
 
 function pathUnWs(path: string): string {
   return path.replaceAll("␣", " ")
@@ -195,8 +253,7 @@ export abstract class Task extends Command<void> {
     );
     command = command.replaceAll(currentFilePlaceHolder, pathWs(vscode.window.activeTextEditor!.document.fileName));
     if (command.indexOf(feedbackPlaceHolder)) {
-      const path = tmp.dirSync().name;
-      command = command.replaceAll(feedbackPlaceHolder, `--feedback ${pathWs(path)}`);
+      command = command.replaceAll(feedbackPlaceHolder, `--feedback ${feedbackDir}`);
     }
     vscode.tasks.executeTask(getTask(this.type!, this.taskLabel, command, this.focus));
   }
@@ -253,11 +310,118 @@ class TipeSysmlTask extends SysMLTask {
   post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {}
 }
 
-let decorations: Map<
-  string,
-  [vscode.TextEditorDecorationType, vscode.DecorationOptions[]]
->;
-let linesMap: Map<string, Set<number>>;
+function processSmt2Query(
+  context: vscode.ExtensionContext,
+  e: vscode.TextEditor,
+  o: any
+): void {
+  const imagesPath = context.asAbsolutePath("images");
+  const lightIcon = `${imagesPath}${fsep}gutter-summoning@2x.png`;
+  const darkIcon = `${imagesPath}${fsep}gutter-summoning@2x_dark.png`;
+  decorate(
+    false,
+    o.type,
+    e,
+    lightIcon,
+    darkIcon,
+    `${o.info}\n${o.query}`,
+    o.pos.beginLine - 1,
+    0,
+    o.pos.beginLine - 1,
+    0
+  );
+}
+
+function processState(
+  context: vscode.ExtensionContext,
+  e: vscode.TextEditor,
+  o: any
+): void {
+  const imagesPath = context.asAbsolutePath("images");
+  const lightIcon = `${imagesPath}${fsep}gutter-hint@2x.png`;
+  const darkIcon = `${imagesPath}${fsep}gutter-hint@2x_dark.png`;
+  decorate(
+    false,
+    o.type,
+    e,
+    lightIcon,
+    darkIcon,
+    `${o.claims}`,
+    o.pos.beginLine - 1,
+    0,
+    o.pos.beginLine - 1,
+    0
+  );
+}
+
+function processInfo(
+  context: vscode.ExtensionContext,
+  e: vscode.TextEditor,
+  o: any
+): void {
+  const imagesPath = context.asAbsolutePath("images");
+  const lightIcon = `${imagesPath}${fsep}gutter-logika-verified@2x.png`;
+  const darkIcon = `${imagesPath}${fsep}gutter-logika-verified@2x_dark.png`;
+  decorate(
+    false,
+    o.type,
+    e,
+    lightIcon,
+    darkIcon,
+    `${o.message}`,
+    o.pos.beginLine - 1,
+    0,
+    o.pos.beginLine - 1,
+    0
+  );
+}
+
+function processReport(
+  e: vscode.TextEditor,
+  o: any
+): void {
+  if (o.message.posOpt.type == "None") throw new Error("Expecting no position info");
+  const msg = o.message as string;
+  switch (o.message.level as number) {
+    case 2:
+      vscode.window.showWarningMessage(msg);
+      break;
+    case 3:
+      vscode.window.showInformationMessage(msg);
+      break;
+    default:
+      vscode.window.showErrorMessage(msg);
+      break;
+  }
+}
+
+function processCoverage(e: vscode.TextEditor, o: any) {
+  if (!linesMap) {
+    linesMap = new Map();
+  }
+  let lines = linesMap.get(e.document.fileName);
+  if (!lines) {
+    lines = new Set();
+  }
+  for (let line = o.pos.beginLine; line <= o.pos.endLine; line += 1) {
+    if (!lines.has(line)) {
+      lines.add(line);
+      decorate(
+        true,
+        o.type,
+        e,
+        undefined,
+        undefined,
+        undefined,
+        line - 1,
+        0,
+        line - 1,
+        0
+      );
+    }
+  }
+  linesMap.set(e.document.fileName, lines);
+}
 
 function decorate(
   isCoverage: boolean,
@@ -331,183 +495,13 @@ class LogikaClearCommand extends Command<void> {
 }
 
 abstract class FeedbackTask extends Task {
-  ac = new AbortController();
-  feedback: string | undefined = undefined;
-  processSmt2Query(
-    context: vscode.ExtensionContext,
-    e: vscode.TextEditor,
-    o: any
-  ): void {
-    const imagesPath = context.asAbsolutePath("images");
-    const lightIcon = `${imagesPath}${fsep}gutter-summoning@2x.png`;
-    const darkIcon = `${imagesPath}${fsep}gutter-summoning@2x_dark.png`;
-    decorate(
-      false,
-      o.type,
-      e,
-      lightIcon,
-      darkIcon,
-      `${o.info}\n${o.query}`,
-      o.pos.beginLine - 1,
-      0,
-      o.pos.beginLine - 1,
-      0
-    );
-  }
-  processState(
-    context: vscode.ExtensionContext,
-    e: vscode.TextEditor,
-    o: any
-  ): void {
-    const imagesPath = context.asAbsolutePath("images");
-    const lightIcon = `${imagesPath}${fsep}gutter-hint@2x.png`;
-    const darkIcon = `${imagesPath}${fsep}gutter-hint@2x_dark.png`;
-    decorate(
-      false,
-      o.type,
-      e,
-      lightIcon,
-      darkIcon,
-      `${o.claims}`,
-      o.pos.beginLine - 1,
-      0,
-      o.pos.beginLine - 1,
-      0
-    );
-  }
-  processInfo(
-    context: vscode.ExtensionContext,
-    e: vscode.TextEditor,
-    o: any
-  ): void {
-    const imagesPath = context.asAbsolutePath("images");
-    const lightIcon = `${imagesPath}${fsep}gutter-logika-verified@2x.png`;
-    const darkIcon = `${imagesPath}${fsep}gutter-logika-verified@2x_dark.png`;
-    decorate(
-      false,
-      o.type,
-      e,
-      lightIcon,
-      darkIcon,
-      `${o.message}`,
-      o.pos.beginLine - 1,
-      0,
-      o.pos.beginLine - 1,
-      0
-    );
-  }
-  processReport(
-    e: vscode.TextEditor,
-    o: any
-  ): void {
-    if (o.message.posOpt.type == "None") throw new Error("Expecting no position info");
-    const msg = o.message as string;
-    switch (o.message.level as number) {
-      case 2:
-        vscode.window.showWarningMessage(msg);
-        break;
-      case 3:
-        vscode.window.showInformationMessage(msg);
-        break;
-      default:
-        vscode.window.showErrorMessage(msg);
-        break;
-    }
-  }
-  processCoverage(e: vscode.TextEditor, o: any) {
-    if (!linesMap) {
-      linesMap = new Map();
-    }
-    let lines = linesMap.get(e.document.fileName);
-    if (!lines) {
-      lines = new Set();
-    }
-    for (let line = o.pos.beginLine; line <= o.pos.endLine; line += 1) {
-      if (!lines.has(line)) {
-        lines.add(line);
-        decorate(
-          true,
-          o.type,
-          e,
-          undefined,
-          undefined,
-          undefined,
-          line - 1,
-          0,
-          line - 1,
-          0
-        );
-      }
-    }
-    linesMap.set(e.document.fileName, lines);
-  }
   start(
     context: vscode.ExtensionContext,
     e: vscode.TaskProcessStartEvent
   ): void {
     clearDecorations();
-    const cliArgs = (e.execution.task.execution! as vscode.ShellExecution)
-      .args;
-    const i = cliArgs.indexOf("--feedback");
-    if (i < 0) return;
-    this.feedback = cliArgs[i + 1].toString();
-    const watcher = fsJs.promises.watch(this.feedback!, {
-      recursive: true,
-      signal: this.ac.signal,
-    });
-    (async () => {
-      for await (const e of watcher) {
-        if (e.filename) {
-          const o = JSON.parse(
-            fsJs.readFileSync(`${this.feedback}${fsep}${e.filename!}`, "utf8")
-          );
-          if (!o.pos) {
-            o.pos = o.posOpt.value;
-          }
-          vscode.window.visibleTextEditors.forEach((e) => {
-            let editorUri = e.document.uri.toString();
-            let fileUri = o.pos.uriOpt.value;
-            if (isWindows) {
-              editorUri = editorUri.replaceAll("%3A", ":").toUpperCase();
-              fileUri = fileUri.toUpperCase();
-            }            
-            if (editorUri == fileUri) {
-              switch (o.type) {
-                case "Logika.Verify.Smt2Query":
-                  this.processSmt2Query(context, e, o);
-                  break;
-                case "Logika.Verify.Info":
-                  this.processInfo(context, e, o);
-                  break;
-                case "Logika.Verify.State":
-                  this.processState(context, e, o);
-                  break;
-                case "Analysis.Coverage":
-                  this.processCoverage(e, o);
-                  break;
-                case "Report":
-                  this.processReport(e, o);
-                  break;
-                default:
-                  console.log(o);
-              }
-            }
-          });
-        }
-      }
-    })().catch((e) => {});
   }
-  post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {
-    const lac = this.ac;
-    this.ac = new AbortController();
-    new Promise(resolve => setTimeout(resolve, 10000)).then(() => {
-      lac.abort();
-      if (this.feedback)
-        fsJs.promises
-          .rm(this.feedback!, { recursive: true, force: true })
-          .catch((e) => {});
-    });
-  }
+  post(context: vscode.ExtensionContext, e: vscode.TaskProcessEndEvent): void {}
 }
 
 abstract class LogikaSysmlTask extends FeedbackTask {
