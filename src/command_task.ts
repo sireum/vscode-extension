@@ -58,43 +58,47 @@ export function init(context: vscode.ExtensionContext) {
   });
   (async () => {
     for await (const e of watcher) {
-      if (e.filename) {
-        const o = JSON.parse(
-          fsJs.readFileSync(`${feedbackDir}${fsep}${e.filename!}`, "utf8")
-        );
-        fsJs.unlink(e.filename, _ => {});
-        if (!o.pos) {
-          o.pos = o.posOpt.value;
-        }
-        vscode.window.visibleTextEditors.forEach((editor) => {
-          let editorUri = editor.document.uri.toString();
-          let fileUri = o.pos.uriOpt.value;
-          if (isWindows) {
-            editorUri = editorUri.replaceAll("%3A", ":").toUpperCase();
-            fileUri = fileUri.toUpperCase();
-          }            
-          if (editorUri == fileUri) {
-            switch (o.type) {
-              case "Logika.Verify.Smt2Query":
-                processSmt2Query(context, editor, o);
-                break;
-              case "Logika.Verify.Info":
-                processInfo(context, editor, o);
-                break;
-              case "Logika.Verify.State":
-                processState(context, editor, o);
-                break;
-              case "Analysis.Coverage":
-                processCoverage(editor, o);
-                break;
-              case "Report":
-                processReport(editor, o);
-                break;
-              default:
-                console.log(o);
-            }
+      try {
+        const filename = `${feedbackDir}${fsep}${e.filename}`;
+        if (fsJs.existsSync(filename)) {
+          const o = JSON.parse(
+            fsJs.readFileSync(`${feedbackDir}${fsep}${e.filename!}`, "utf8")
+          );
+          fsJs.unlink(filename, _ => {});
+          if (!o.pos) {
+            o.pos = o.posOpt.value;
           }
-        });
+          vscode.window.visibleTextEditors.forEach((editor) => {
+            let editorUri = editor.document.uri.toString();
+            let fileUri = o.pos.uriOpt.value;
+            if (isWindows) {
+              editorUri = editorUri.replaceAll("%3A", ":").toLowerCase();
+              fileUri = fileUri.toLowerCase();
+            }            
+            if (editorUri == fileUri) {
+              switch (o.type) {
+                case "Logika.Verify.Smt2Query":
+                  processSmt2Query(context, editor, o);
+                  break;
+                case "Logika.Verify.Info":
+                  processInfo(context, editor, o);
+                  break;
+                case "Logika.Verify.State":
+                  processState(context, editor, o);
+                  break;
+                case "Analysis.Coverage":
+                  processCoverage(editor, o);
+                  break;
+                case "Report":
+                  processReport(editor, o);
+                  break;
+                default:
+                  console.log(o);
+              }
+            }
+          });
+        }
+      } catch(e) {
       }
     }
   })().catch((e) => {});
