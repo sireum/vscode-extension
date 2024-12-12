@@ -41,7 +41,7 @@ const workspaceRootsPlaceHolder = "$workspaceRoots";
 const currentFilePlaceHolder = "$currentFile";
 const sireumKey = "sireum";
 const sireumScriptSuffix = isWindows? `\\bin\\sireum.bat` : `/bin/sireum`;
-export let ac: AbortController = new AbortController();
+let ac: AbortController = new AbortController();
 const feedbackDir = pathWs(tmp.dirSync().name);
 let decorations: Map<
   string,
@@ -51,7 +51,6 @@ let linesMap: Map<string, Set<number>>;
 
 
 export function init(context: vscode.ExtensionContext) {
-  ac = new AbortController();
   const watcher = fsJs.promises.watch(feedbackDir, {
     recursive: true,
     signal: ac.signal,
@@ -72,7 +71,7 @@ export function init(context: vscode.ExtensionContext) {
             let editorUri = editor.document.uri.toString();
             let fileUri = o.pos.uriOpt.value;
             if (isWindows) {
-              editorUri = editorUri.replaceAll("%3A", ":").toLowerCase();
+              editorUri = editorUri.toLowerCase().replaceAll("%3a", ":");
               fileUri = fileUri.toLowerCase();
             }            
             if (editorUri == fileUri) {
@@ -102,6 +101,11 @@ export function init(context: vscode.ExtensionContext) {
       }
     }
   })().catch((e) => {});
+}
+
+export function deinit() {
+  ac.abort();
+  ac = new AbortController();
 }
 
 function pathUnWs(path: string): string {
