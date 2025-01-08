@@ -135,23 +135,8 @@ class SireumScriptCommand extends Command<Promise<string | undefined>> {
   }
 }
 
-class SireumImportCommand extends Command<Promise<undefined | string>> {
+class SireumImportCommand {
   static COMMAND = "${command:org.sireum.import}";
-  command = SireumImportCommand.COMMAND;
-  async run(context: vscode.ExtensionContext, workspaceRoots: string): Promise<undefined | string> {
-    const workspaceFolders =
-    vscode.workspace.workspaceFolders &&
-    vscode.workspace.workspaceFolders.length > 0
-      ? vscode.workspace.workspaceFolders
-      : [];
-    for (const f of workspaceFolders) {
-      const r = await importBuild(f.uri.fsPath, true);
-      if (r) {
-        return r;
-      }
-    } 
-    return undefined;
-  }
 }
 
 class InsertSlangSymbolCommand extends Command<void> {
@@ -232,7 +217,7 @@ export abstract class Task extends Command<void> {
     context: vscode.ExtensionContext,
     e: vscode.TaskProcessEndEvent
   ): void;
-  public run(context: vscode.ExtensionContext, workspaceRoots: string): void {
+  public async run(context: vscode.ExtensionContext, workspaceRoots: string): Promise<void> {
     if (this.fileExtensions) {
       let found = false;
       for (const i in this.fileExtensions) {
@@ -259,11 +244,32 @@ export abstract class Task extends Command<void> {
       workspaceRootsPlaceHolder,
       pathWs(workspaceRoots)
     );
-    command = command.replaceAll(currentFilePlaceHolder, pathWs(vscode.window.activeTextEditor!.document.fileName));
+    const editor = vscode.window.activeTextEditor;
+    if (editor) {
+      command = command.replaceAll(currentFilePlaceHolder, pathWs(editor.document.fileName));
+    }
     if (command.indexOf(feedbackPlaceHolder)) {
       command = command.replaceAll(feedbackPlaceHolder, `--feedback ${feedbackDir}`);
     }
-    vscode.tasks.executeTask(getTask(this.type!, this.taskLabel, command, this.focus));
+    const t = getTask(this.type!, this.taskLabel, command, this.focus);
+    const execution = t!.execution! as vscode.ShellExecution;
+    if (execution.command == "${command:org.sireum.import}") {
+      const workspaceFolders =
+        vscode.workspace.workspaceFolders &&
+        vscode.workspace.workspaceFolders.length > 0
+        ? vscode.workspace.workspaceFolders
+        : [];
+      for (const f of workspaceFolders) {
+        const r = await importBuild(f.uri.fsPath, true);
+        if (r) {
+          execution.command = r[0];
+          execution.args = r.slice(1).map(s => pathUnWs(s));
+          vscode.tasks.executeTask(t);
+        }
+      }
+    } else {
+      vscode.tasks.executeTask(t);
+    }
   }
 }
 
@@ -940,7 +946,6 @@ export const logikaTasks: Task[] = [
 ];
 
 export const commands: Command<any>[] = [
-  new SireumImportCommand(),
   new SireumScriptCommand(),
   new InsertSlangSymbolCommand(),
   new GetColumnCommand(),
@@ -987,7 +992,7 @@ async function getSireum(): Promise<string | undefined> {
 }
 
 
-export async function importBuild(path: string, force: boolean): Promise<string | undefined> {
+export async function importBuild(path: string, force: boolean): Promise<string[] | undefined> {
   const sireum = await getSireum();
   if (!sireum) {
     return undefined;
@@ -1012,13 +1017,11 @@ export async function importBuild(path: string, force: boolean): Promise<string 
           return undefined;
         }
       }
-      const r = `${sireum} proyek export "${path}"`;
-      return r;
+      return [`${sireum}`, `proyek`, `export`, `${pathWs(path)}`];
     } catch (e) {
     }
   } else if (force && fsJs.existsSync(binProject)) {
-    const r = `${sireum} proyek export "${path}"`;
-    return r;
+    return [`${sireum}`, `proyek`, `export`, `${pathWs(path)}`];
   } else {
     vscode.window.showErrorMessage(`Requires ${binProject}`);
   }
