@@ -23,6 +23,17 @@
   ],  
 "main": "./out/extension.js",
   "contributes": {
+    "languages": [
+      {
+        "id": "logika",
+        "aliases": [
+          "Logika Truth Table"
+        ],
+        "extensions": [
+          ".logika"
+        ]
+      }
+    ],    
     "commands": [
       {
         "command": "org.sireum.slang.tipe",
