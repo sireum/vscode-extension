@@ -64,38 +64,44 @@ export function init(context: vscode.ExtensionContext) {
             fsJs.readFileSync(`${feedbackDir}${fsep}${e.filename!}`, "utf8")
           );
           fsJs.unlink(filename, _ => {});
-          if (!o.pos) {
-            o.pos = o.posOpt.value;
-          }
-          vscode.window.visibleTextEditors.forEach((editor) => {
-            let editorUri = editor.document.uri.toString();
-            let fileUri = o.pos.uriOpt.value;
-            if (isWindows) {
-              editorUri = editorUri.toLowerCase().replaceAll("%3a", ":");
-              fileUri = fileUri.toLowerCase();
-            }            
-            if (editorUri == fileUri) {
-              switch (o.type) {
-                case "Logika.Verify.Smt2Query":
-                  processSmt2Query(context, editor, o);
-                  break;
-                case "Logika.Verify.Info":
-                  processInfo(context, editor, o);
-                  break;
-                case "Logika.Verify.State":
-                  processState(context, editor, o);
-                  break;
-                case "Analysis.Coverage":
-                  processCoverage(editor, o);
-                  break;
-                case "Report":
-                  processReport(editor, o);
-                  break;
-                default:
-                  console.log(o);
+          switch (o.type) {
+            case "Report":
+              processReport(o);
+              break;
+            default:
+              if (!o.pos) {
+                o.pos = o.posOpt.value;
               }
-            }
-          });
+              vscode.window.visibleTextEditors.forEach((editor) => {
+                let editorUri = editor.document.uri.toString();
+                let fileUri = o.pos.uriOpt.value;
+                if (isWindows) {
+                  editorUri = editorUri.toLowerCase().replaceAll("%3a", ":");
+                  fileUri = fileUri.toLowerCase();
+                }            
+                if (editorUri == fileUri) {
+                  switch (o.type) {
+                    case "Logika.Verify.Smt2Query":
+                      processSmt2Query(context, editor, o);
+                      break;
+                    case "Logika.Verify.Info":
+                      processInfo(context, editor, o);
+                      break;
+                    case "Logika.Verify.State":
+                      processState(context, editor, o);
+                      break;
+                    case "Analysis.Coverage":
+                      processCoverage(editor, o);
+                      break;
+                    case "Report":
+                      processReport(o);
+                      break;
+                    default:
+                      console.log(o);
+                  }
+                }
+              });  
+          }        
         }
       } catch(e) {
       }
@@ -391,11 +397,10 @@ function processInfo(
 }
 
 function processReport(
-  e: vscode.TextEditor,
   o: any
 ): void {
-  if (o.message.posOpt.type == "None") throw new Error("Expecting no position info");
-  const msg = o.message as string;
+  if (o.message.posOpt.type != "None") return;
+  const msg = o.message.message as string;
   switch (o.message.level as number) {
     case 2:
       vscode.window.showWarningMessage(msg);
