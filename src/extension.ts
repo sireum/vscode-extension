@@ -25,8 +25,8 @@
 import * as vscode from "vscode";
 import * as ct from "./command_task";
 
-export function activate(context: vscode.ExtensionContext) {
-  ct.init(context);
+export async function activate(context: vscode.ExtensionContext) {
+  await ct.init(context);
 
   const workspaceFolders =
     vscode.workspace.workspaceFolders &&

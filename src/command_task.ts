@@ -49,8 +49,21 @@ let decorations: Map<
 >;
 let linesMap: Map<string, Set<number>>;
 
+async function exists(p: string): Promise<boolean> {
+  let r = false;
+  try { 
+    await vscode.workspace.fs.stat(vscode.Uri.file(p));
+    r = true;
+  } catch {}
+  return r;
+}
 
-export function init(context: vscode.ExtensionContext) {
+async function read(p: string): Promise<string> {
+  return new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.file(p)));
+}
+
+
+export async function init(context: vscode.ExtensionContext) {
   const watcher = fsJs.promises.watch(feedbackDir, {
     recursive: true,
     signal: ac.signal,
@@ -59,9 +72,9 @@ export function init(context: vscode.ExtensionContext) {
     for await (const e of watcher) {
       try {
         const filename = `${feedbackDir}${fsep}${e.filename}`;
-        if (fsJs.existsSync(filename)) {
+        if (await exists(filename)) {
           const o = JSON.parse(
-            fsJs.readFileSync(`${feedbackDir}${fsep}${e.filename!}`, "utf8")
+            await read(`${feedbackDir}${fsep}${e.filename!}`)
           );
           fsJs.unlink(filename, _ => {});
           switch (o.type) {
@@ -137,7 +150,10 @@ class SireumScriptCommand extends Command<Promise<string | undefined>> {
   static COMMAND = "${command:org.sireum.script}";
   command = SireumScriptCommand.COMMAND;
   async run(context: vscode.ExtensionContext, workspaceRoots: string): Promise<string | undefined> {
-    return getSireum();
+    const r = await getSireum();
+    let r2 = r? pathUnWs(r) : undefined;
+    if (r != r2) r2 = "\"" + r2 + "\"";
+    return r2;
   }
 }
 
@@ -767,12 +783,13 @@ export function getTask(
   for (const arg of args.split(" ")) {
     as.push(pathUnWs(arg))
   }
+  const se = isWindows? new vscode.ShellExecution(as[0], as.slice(1), { executable: "cmd.exe", shellArgs: ["/D", "/C"]}) : new vscode.ShellExecution(as[0], as.slice(1));
   const t = new vscode.Task(
     { type: type, kind: kind },
     vscode.TaskScope.Workspace,
     kind,
     type,
-    isWindows? new vscode.ShellExecution(as[0], as.slice(1), { executable: "cmd.exe", shellArgs: ["/D", "/C"]}) : new vscode.ShellExecution(as[0], as.slice(1)),
+    se,
     ["$sireumProblemMatcher"]
   );
   t.presentationOptions = {
@@ -972,8 +989,8 @@ async function getSireum(): Promise<string | undefined> {
     update = true;
     sireumHome = process.env.SIREUM_HOME;
   }
-  let r = `${sireumHome}${sireumScriptSuffix}`
-  while (!fsJs.existsSync(r)) {
+  let r = `${sireumHome}${sireumScriptSuffix}`;
+  while (!exists(r)) {
     update = true;
     vscode.window.showInformationMessage("Please select Sireum's home folder path");
     const uris = await vscode.window.showOpenDialog({
@@ -1006,12 +1023,12 @@ export async function importBuild(path: string, force: boolean): Promise<string[
   const dotSireum = `${path}${fsep}.sireum`
   const binProject = `${path}${fsep}bin${fsep}project.cmd`
 
-  if (fsJs.existsSync(dotSireum)) {
+  if (await exists(dotSireum)) {
     const dotSireumVer = `${dotSireum}.ver`
     try { 
       const stdout = spawnJs.execSync(`${sireum} --sha`, { encoding: "utf-8" }) 
-      const dotSireumVerExist = fsJs.existsSync(dotSireumVer);
-      if (dotSireumVerExist && stdout.trim() == fsJs.readFileSync(dotSireumVer, "utf-8").trim()) {
+      const dotSireumVerExist = await exists(dotSireumVer);
+      if (dotSireumVerExist && stdout.trim() == (await read(dotSireumVer)).trim()) {
         return undefined;
       }
       if (!force) {
@@ -1025,7 +1042,7 @@ export async function importBuild(path: string, force: boolean): Promise<string[
       return [`${sireum}`, `proyek`, `export`, `${pathWs(path)}`];
     } catch (e) {
     }
-  } else if (force && fsJs.existsSync(binProject)) {
+  } else if (force && await exists(binProject)) {
     return [`${sireum}`, `proyek`, `export`, `${pathWs(path)}`];
   } else {
     vscode.window.showErrorMessage(`Requires ${binProject}`);
