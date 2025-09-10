@@ -57,8 +57,8 @@ async function exists(p: string): Promise<boolean> {
   return false;
 }
 
-async function read(p: string): Promise<string> {
-  return new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.file(p)));
+function read(p: string): string {
+  return fsJs.readFileSync(p, "utf8");
 }
 
 
@@ -72,9 +72,7 @@ export async function init(context: vscode.ExtensionContext) {
       try {
         const filename = `${feedbackDir}${fsep}${e.filename}`;
         if (await exists(filename)) {
-          const o = JSON.parse(
-            await read(`${feedbackDir}${fsep}${e.filename!}`)
-          );
+          const o = JSON.parse(read(`${feedbackDir}${fsep}${e.filename!}`));
           fsJs.unlink(filename, _ => {});
           switch (o.type) {
             case "Report":
@@ -1027,7 +1025,7 @@ export async function importBuild(path: string, force: boolean): Promise<string[
     try { 
       const stdout = spawnJs.execSync(`${sireum} --sha`, { encoding: "utf-8" }) 
       const dotSireumVerExist = await exists(dotSireumVer);
-      if (dotSireumVerExist && stdout.trim() == (await read(dotSireumVer)).trim()) {
+      if (dotSireumVerExist && stdout.trim() == read(dotSireumVer).trim()) {
         return undefined;
       }
       if (!force) {
