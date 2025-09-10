@@ -27,7 +27,8 @@ def pkg(): Unit = {
   for (p <- home.list if p.ext == "vsix") {
     p.removeAll()
   }
-  proc"npm install".at(home).echo.console.runCheck()
+  if (Os.isWin) proc"cmd /d /c npm install".at(home).echo.console.runCheck()
+  else proc"npm install".at(home).echo.console.runCheck()
   val packageJson = home / "package.json"
   val content = packageJson.read
   val version = ops.StringOps(proc"git log -n 1 --date=format:%Y%m%d --pretty=format:4.%cd.%h".at(home).runCheck().out).trim
@@ -36,7 +37,8 @@ def pkg(): Unit = {
   packageJson.writeOver(ops.StringOps(ops.StringOps(content).
     replaceAllLiterally("v0.0.0", vs(2))).
     replaceAllLiterally("0.0.0", st"${(vs(2 ~> lastV), ".")}".render))
-  proc"vsce package".at(home).echo.console.runCheck()
+  if (Os.isWin) proc"cmd /d /c vsce package".at(home).echo.console.runCheck()
+  else proc"vsce package".at(home).echo.console.runCheck()
   packageJson.writeOver(content)
   for (p <- home.list if p.ext == "vsix" && !ops.StringOps(p.name).startsWith("sireum-")) {
     p.moveOverTo(p.up / "sireum-vscode-extension.vsix")

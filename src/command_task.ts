@@ -50,11 +50,11 @@ let decorations: Map<
 let linesMap: Map<string, Set<number>>;
 
 async function exists(p: string): Promise<boolean> {
-  let r = false;
   try { 
-    await vscode.workspace.fs.stat(vscode.Uri.file(p)).then(() => r = true);
+    await vscode.workspace.fs.stat(vscode.Uri.file(p));
+    return true;
   } catch {}
-  return r;
+  return false;
 }
 
 async function read(p: string): Promise<string> {
@@ -989,7 +989,7 @@ async function getSireum(): Promise<string | undefined> {
     sireumHome = process.env.SIREUM_HOME;
   }
   let r = `${sireumHome}${sireumScriptSuffix}`;
-  while (!exists(r)) {
+  while (!(await exists(r))) {
     update = true;
     vscode.window.showInformationMessage("Please select Sireum's home folder path");
     const uris = await vscode.window.showOpenDialog({
