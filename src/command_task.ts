@@ -52,8 +52,7 @@ let linesMap: Map<string, Set<number>>;
 async function exists(p: string): Promise<boolean> {
   let r = false;
   try { 
-    await vscode.workspace.fs.stat(vscode.Uri.file(p));
-    r = true;
+    await vscode.workspace.fs.stat(vscode.Uri.file(p)).then(() => r = true);
   } catch {}
   return r;
 }
