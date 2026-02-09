@@ -24,8 +24,18 @@
  */
 import * as vscode from "vscode";
 import * as ct from "./command_task";
+import * as slangLl2 from "./slang_ll2";
 
 export async function activate(context: vscode.ExtensionContext) {
+  const listener = (e: vscode.TextDocument) => {
+    if (e.languageId == "slang") slangLl2.checkTextDocument(e);
+  };
+  vscode.workspace.onDidOpenTextDocument(listener);
+  vscode.workspace.onDidSaveTextDocument(listener);
+  for (const e of vscode.workspace.textDocuments) {
+    if (e.languageId == "slang") slangLl2.checkTextDocument(e);
+  }
+
   await ct.init(context);
 
   const workspaceFolders =
@@ -38,11 +48,17 @@ export async function activate(context: vscode.ExtensionContext) {
     .join(ct.psep);
   for (const f of workspaceFolders) {
     const dotSireum = vscode.Uri.joinPath(f.uri, ".sireum");
-    vscode.workspace.fs.stat(dotSireum).then(async _ => { 
+    vscode.workspace.fs.stat(dotSireum).then(async (_) => {
       if (await ct.importBuild(f.uri.fsPath, false)) {
         await vscode.commands.executeCommand("metals.build-disconnect");
-        vscode.tasks.executeTask(ct.getTask(ct.importProjectTask.type, 
-          ct.importProjectTask.taskLabel, ct.importProjectTask.command, ct.importProjectTask.focus));
+        vscode.tasks.executeTask(
+          ct.getTask(
+            ct.importProjectTask.type,
+            ct.importProjectTask.taskLabel,
+            ct.importProjectTask.command,
+            ct.importProjectTask.focus,
+          ),
+        );
       }
     });
   }
@@ -55,45 +71,60 @@ export async function activate(context: vscode.ExtensionContext) {
   ct.hamrTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
   ct.logikaTasks.forEach((ct) => ctMap.set(ct.taskLabel, ct));
   vscode.tasks.onDidStartTaskProcess((e) =>
-    ctMap.get(e.execution.task.name)?.start(context, e)
+    ctMap.get(e.execution.task.name)?.start(context, e),
   );
   vscode.tasks.onDidEndTaskProcess((e) =>
-    ctMap.get(e.execution.task.name)?.post(context, e)
+    ctMap.get(e.execution.task.name)?.post(context, e),
   );
   ct.commands.forEach((c) => {
     context.subscriptions.push(
       vscode.commands.registerCommand(c.commandId(), () =>
-        c.run(context, workspaceRoots)
-      )
+        c.run(context, workspaceRoots),
+      ),
     );
   });
   let taskProvider = new ct.SireumTaskProvider();
   workspaceFolders.forEach((f) =>
-    vscode.tasks.registerTaskProvider(ct.SireumTaskProvider.TYPE, taskProvider)
+    vscode.tasks.registerTaskProvider(ct.SireumTaskProvider.TYPE, taskProvider),
   );
   taskProvider = new ct.SireumSlangTaskProvider();
   workspaceFolders.forEach((f) =>
-    vscode.tasks.registerTaskProvider(ct.SireumSlangTaskProvider.TYPE, taskProvider)
+    vscode.tasks.registerTaskProvider(
+      ct.SireumSlangTaskProvider.TYPE,
+      taskProvider,
+    ),
   );
   taskProvider = new ct.SireumSlangRefactorTaskProvider();
   workspaceFolders.forEach((f) =>
-    vscode.tasks.registerTaskProvider(ct.SireumSlangRefactorTaskProvider.TYPE, taskProvider)
+    vscode.tasks.registerTaskProvider(
+      ct.SireumSlangRefactorTaskProvider.TYPE,
+      taskProvider,
+    ),
   );
   taskProvider = new ct.SireumSlangTemplateTaskProvider();
   workspaceFolders.forEach((f) =>
-    vscode.tasks.registerTaskProvider(ct.SireumSlangTemplateTaskProvider.TYPE, taskProvider)
+    vscode.tasks.registerTaskProvider(
+      ct.SireumSlangTemplateTaskProvider.TYPE,
+      taskProvider,
+    ),
   );
   taskProvider = new ct.SireumHamrTaskProvider();
   workspaceFolders.forEach((f) =>
-    vscode.tasks.registerTaskProvider(ct.SireumHamrTaskProvider.TYPE, taskProvider)
+    vscode.tasks.registerTaskProvider(
+      ct.SireumHamrTaskProvider.TYPE,
+      taskProvider,
+    ),
   );
   taskProvider = new ct.SireumLogikaTaskProvider();
   workspaceFolders.forEach((f) =>
-    vscode.tasks.registerTaskProvider(ct.SireumLogikaTaskProvider.TYPE, taskProvider)
+    vscode.tasks.registerTaskProvider(
+      ct.SireumLogikaTaskProvider.TYPE,
+      taskProvider,
+    ),
   );
 }
+
 
 export function deactivate(context: vscode.ExtensionContext) {
   ct.deinit();
 }
-

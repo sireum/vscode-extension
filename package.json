@@ -19,9 +19,12 @@
   ],
   "activationEvents": [
     "workspaceContains:.sireum",
-    "workspaceContains:bin/project.cmd"
-  ],  
-"main": "./out/extension.js",
+    "workspaceContains:bin/project.cmd",
+    "workspaceContains:.sireum",
+    "workspaceContains:**/*.sl",
+    "workspaceContains:**/*.slang"
+  ],
+  "main": "./out/extension.js",
   "contributes": {
     "languages": [
       {
@@ -32,8 +35,26 @@
         "extensions": [
           ".logika"
         ]
+      },
+      {
+        "id": "slang",
+        "aliases": [
+          "Slang",
+          "slang"
+        ],
+        "extensions": [
+          ".slang",
+          ".sl"
+        ]
       }
-    ],    
+    ],
+    "grammars": [
+      {
+        "language": "slang",
+        "scopeName": "source.slang",
+        "path": "./syntaxes/slang.tmLanguage.json"
+      }
+    ],
     "commands": [
       {
         "command": "org.sireum.slang.tipe",
@@ -243,7 +264,7 @@
           "sireum.home": {
             "type": "string",
             "default": "",
-            "description": "Sireum home folder path"    
+            "description": "Sireum home folder path"
           }
         }
       }
@@ -342,6 +363,18 @@
           }
         }
       }
+    ],
+    "themes": [
+      {
+        "label": "Sireum Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/sireum-dark.json"
+      },
+      {
+        "label": "Sireum Light",
+        "uiTheme": "vs",
+        "path": "./themes/sireum-light.json"
+      }
     ]
   },
   "scripts": {
@@ -352,14 +385,15 @@
     "watch": "tsc -watch -p ./"
   },
   "dependencies": {
-    "tmp": "^0.2.3"
+    "tmp": "^0.2.5",
+    "antlr4": "^4.13.2"
   },
   "devDependencies": {
-    "@types/node": "^22",
-    "@types/vscode": "^1.92.0",
-    "@typescript-eslint/eslint-plugin": "^8.2.0",
-    "@typescript-eslint/parser": "^8.2.0",
-    "eslint": "^9.9.1",
-    "typescript": "^5.5.4"
+    "@types/node": "^25.2.2",
+    "@types/vscode": "^1.92.2",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "eslint": "^9.39.2",
+    "typescript": "^5.9.3"
   }
 }
