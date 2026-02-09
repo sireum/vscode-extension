@@ -60,7 +60,7 @@ export async function activate(context: vscode.ExtensionContext) {
           ),
         );
       }
-    });
+    }, (_) => {});
   }
 
   const ctMap = new Map<string, ct.Task>();
