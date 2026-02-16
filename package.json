@@ -22,10 +22,21 @@
     "workspaceContains:bin/project.cmd",
     "workspaceContains:.sireum",
     "workspaceContains:**/*.sl",
-    "workspaceContains:**/*.slang"
+    "workspaceContains:**/*.slang",
+    "workspaceContains:**/*.sysml"
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configurationDefaults": {
+      "[slang]": {
+        "editor.fontFamily": "Sireum Mono Plus",
+        "editor.fontSize": 18
+      },
+      "[sysml]": {
+        "editor.fontFamily": "Sireum Mono Plus",
+        "editor.fontSize": 18
+      }
+    },
     "languages": [
       {
         "id": "logika",
@@ -46,7 +57,19 @@
           ".slang",
           ".sl"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration-slang.json"
+      },
+      {
+        "id": "sysml",
+        "aliases": [
+          "SysML v2",
+          "SysML",
+          "sysml"
+        ],
+        "extensions": [
+          ".sysml"
+        ],
+        "configuration": "./language-configuration-sysml.json"
       }
     ],
     "grammars": [
@@ -54,6 +77,11 @@
         "language": "slang",
         "scopeName": "source.slang",
         "path": "./syntaxes/slang.tmLanguage.json"
+      },
+      {
+        "language": "sysml",
+        "scopeName": "source.sysml",
+        "path": "./syntaxes/sysml.tmLanguage.json"
       }
     ],
     "commands": [

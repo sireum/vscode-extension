@@ -672,6 +672,131 @@
       "name": "Slang - Horizontal Line",
       "scope": ["punctuation.separator.hline.slang"],
       "settings": { "foreground": "#B0B0AA" }
+    },
+
+    {
+      "name": "SysML - Comments",
+      "scope": [
+        "comment.line.double-slash.sysml",
+        "comment.block.sysml"
+      ],
+      "settings": { "foreground": "#8E8F8A" }
+    },
+    {
+      "name": "SysML - Strings",
+      "scope": ["string.quoted.double.sysml"],
+      "settings": { "foreground": "#2E7D32" }
+    },
+    {
+      "name": "SysML - Unrestricted Names",
+      "scope": ["entity.name.tag.unrestricted.sysml"],
+      "settings": { "foreground": "#2E7D32" }
+    },
+    {
+      "name": "SysML - Escape Characters",
+      "scope": ["constant.character.escape.sysml"],
+      "settings": { "foreground": "#0E7EAA" }
+    },
+    {
+      "name": "SysML - Declaration Keywords",
+      "scope": [
+        "keyword.declaration.sysml",
+        "keyword.declaration.type.sysml"
+      ],
+      "settings": { "foreground": "#5D6FA2", "fontStyle": "bold" }
+    },
+    {
+      "name": "SysML - Control Flow Keywords",
+      "scope": ["keyword.control.sysml"],
+      "settings": { "foreground": "#8F5EAC", "fontStyle": "bold" }
+    },
+    {
+      "name": "SysML - Import Keywords",
+      "scope": ["keyword.control.import.sysml"],
+      "settings": { "foreground": "#4D82A4" }
+    },
+    {
+      "name": "SysML - Relationship, Visibility, Modifier, Action, Annotation, Requirement Keywords",
+      "scope": [
+        "keyword.other.relationship.sysml",
+        "keyword.other.visibility.sysml",
+        "keyword.other.modifier.sysml",
+        "keyword.other.action.sysml",
+        "keyword.other.annotation.sysml",
+        "keyword.other.requirement.sysml"
+      ],
+      "settings": { "foreground": "#5D6FA2", "fontStyle": "bold" }
+    },
+    {
+      "name": "SysML - Operator Keywords",
+      "scope": ["keyword.operator.word.sysml"],
+      "settings": { "foreground": "#5D6FA2", "fontStyle": "bold" }
+    },
+    {
+      "name": "SysML - GUMBO Keywords",
+      "scope": ["keyword.other.gumbo.sysml"],
+      "settings": { "foreground": "#5D6FA2", "fontStyle": "bold" }
+    },
+    {
+      "name": "SysML - GUMBO Annotations",
+      "scope": ["storage.modifier.annotation.sysml"],
+      "settings": { "foreground": "#5D6FA2", "fontStyle": "italic bold" }
+    },
+    {
+      "name": "SysML - Boolean & Null Literals",
+      "scope": [
+        "constant.language.boolean.sysml",
+        "constant.language.null.sysml"
+      ],
+      "settings": { "foreground": "#0F76B8" }
+    },
+    {
+      "name": "SysML - Numeric Literals",
+      "scope": [
+        "constant.numeric.float.sysml",
+        "constant.numeric.integer.sysml"
+      ],
+      "settings": { "foreground": "#0D6EAD" }
+    },
+    {
+      "name": "SysML - Structural Operators",
+      "scope": [
+        "keyword.operator.specializes.sysml",
+        "keyword.operator.redefines.sysml",
+        "keyword.operator.namespace.sysml",
+        "keyword.operator.arrow.sysml",
+        "keyword.operator.connection.sysml",
+        "keyword.operator.range.sysml",
+        "keyword.operator.optional.sysml",
+        "keyword.operator.null-coalescing.sysml",
+        "keyword.operator.meta.sysml"
+      ],
+      "settings": { "foreground": "#5D6FA2", "fontStyle": "bold" }
+    },
+    {
+      "name": "SysML - Comparison Operators",
+      "scope": ["keyword.operator.comparison.sysml"],
+      "settings": { "foreground": "#7A6E20" }
+    },
+    {
+      "name": "SysML - Assignment Operators",
+      "scope": ["keyword.operator.assignment.sysml"],
+      "settings": { "foreground": "#8F5EAC", "fontStyle": "bold" }
+    },
+    {
+      "name": "SysML - Arithmetic Operators",
+      "scope": ["keyword.operator.arithmetic.sysml"],
+      "settings": { "foreground": "#7A6E20" }
+    },
+    {
+      "name": "SysML - Bitwise Operators",
+      "scope": ["keyword.operator.bitwise.sysml"],
+      "settings": { "foreground": "#7A6E20" }
+    },
+    {
+      "name": "SysML - Annotation Punctuation",
+      "scope": ["punctuation.definition.annotation.sysml"],
+      "settings": { "foreground": "#8E4E78" }
     }
   ]
 }

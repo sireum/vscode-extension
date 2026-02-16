@@ -1,0 +1,303 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "SysML v2",
+  "scopeName": "source.sysml",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#unrestricted-names" },
+    { "include": "#keywords" },
+    { "include": "#literals" },
+    { "include": "#operators" },
+    { "include": "#punctuation" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.sysml",
+          "match": "//[^\\n\\r]*"
+        },
+        {
+          "name": "comment.block.sysml",
+          "begin": "/\\*(?!\\{)",
+          "end": "\\*/",
+          "patterns": [
+            { "include": "#comments" }
+          ]
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.sysml",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            { "include": "#string-escape" }
+          ]
+        }
+      ]
+    },
+    "string-escape": {
+      "patterns": [
+        {
+          "name": "constant.character.escape.sysml",
+          "match": "\\\\[btnfr\"'\\\\]"
+        }
+      ]
+    },
+    "unrestricted-names": {
+      "patterns": [
+        {
+          "name": "entity.name.tag.unrestricted.sysml",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            { "include": "#string-escape" }
+          ]
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "comment": "Definition keywords",
+          "name": "keyword.declaration.sysml",
+          "match": "\\b(package|library|standard|def|abstract|variation|variant)\\b"
+        },
+        {
+          "comment": "Type definition keywords",
+          "name": "keyword.declaration.type.sysml",
+          "match": "\\b(attribute|enum|occurrence|item|part|port|connection|interface|allocation|flow|message|action|state|calc|constraint|requirement|concern|case|analysis|verification|use|view|viewpoint|rendering|metadata)\\b"
+        },
+        {
+          "comment": "Usage and relationship keywords",
+          "name": "keyword.other.relationship.sysml",
+          "match": "\\b(ref|redefines|subsets|specializes|references|crosses|defined|by|ordered|nonunique|binding|bind|succession|connect|allocate)\\b"
+        },
+        {
+          "comment": "Control flow keywords",
+          "name": "keyword.control.sysml",
+          "match": "\\b(if|else|while|loop|until|for|then|do|return|first)\\b"
+        },
+        {
+          "comment": "Visibility and direction keywords",
+          "name": "keyword.other.visibility.sysml",
+          "match": "\\b(public|private|protected|in|out|inout)\\b"
+        },
+        {
+          "comment": "Modifier keywords",
+          "name": "keyword.other.modifier.sysml",
+          "match": "\\b(derived|constant|end|default|individual|event|parallel|snapshot|timeslice)\\b"
+        },
+        {
+          "comment": "Action and state keywords",
+          "name": "keyword.other.action.sysml",
+          "match": "\\b(perform|accept|send|assign|terminate|merge|decide|join|fork|entry|exit|exhibit|transition)\\b"
+        },
+        {
+          "comment": "Import and dependency keywords",
+          "name": "keyword.control.import.sysml",
+          "match": "\\b(import|all|alias|filter|dependency|from|to|of|via|at|after|when|include|expose|render)\\b"
+        },
+        {
+          "comment": "Annotation keywords",
+          "name": "keyword.other.annotation.sysml",
+          "match": "\\b(comment|about|locale|doc|rep|language|new|meta)\\b"
+        },
+        {
+          "comment": "Operator keywords",
+          "name": "keyword.operator.word.sysml",
+          "match": "\\b(implies|or|xor|and|not|hastype|istype|as)\\b"
+        },
+        {
+          "comment": "Boolean literals",
+          "name": "constant.language.boolean.sysml",
+          "match": "\\b(true|false)\\b"
+        },
+        {
+          "comment": "Null literal",
+          "name": "constant.language.null.sysml",
+          "match": "\\bnull\\b"
+        },
+        {
+          "comment": "Requirement keywords",
+          "name": "keyword.other.requirement.sysml",
+          "match": "\\b(subject|actor|stakeholder|satisfy|objective|assert|assume|require|frame|verify)\\b"
+        },
+        {
+          "comment": "GUMBO keywords",
+          "name": "keyword.other.gumbo.sysml",
+          "match": "\\b(invariants|inv|integration|initialize|compute|compute_cases|infoflow|handle|guarantee|functions|mut|invariant|reads|modifies)\\b"
+        },
+        {
+          "comment": "GUMBO annotation keywords",
+          "name": "storage.modifier.annotation.sysml",
+          "match": "@(strictpure|pure|spec)\\b"
+        }
+      ]
+    },
+    "literals": {
+      "patterns": [
+        {
+          "comment": "Real number with decimal point or exponent",
+          "name": "constant.numeric.float.sysml",
+          "match": "\\b[0-9]+(?:\\.[0-9]+(?:[eE][+-]?[0-9]+)?|[eE][+-]?[0-9]+)\\b"
+        },
+        {
+          "comment": "Decimal integer",
+          "name": "constant.numeric.integer.sysml",
+          "match": "\\b[0-9]+\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "comment": "Namespace visibility operator",
+          "name": "keyword.operator.namespace.sysml",
+          "match": "::>"
+        },
+        {
+          "comment": "Redefines shorthand operator",
+          "name": "keyword.operator.redefines.sysml",
+          "match": ":>>"
+        },
+        {
+          "comment": "Specializes shorthand operator",
+          "name": "keyword.operator.specializes.sysml",
+          "match": ":>"
+        },
+        {
+          "comment": "Fat arrow / implies operator",
+          "name": "keyword.operator.arrow.sysml",
+          "match": "=>"
+        },
+        {
+          "comment": "Connection operator",
+          "name": "keyword.operator.connection.sysml",
+          "match": "->"
+        },
+        {
+          "comment": "Exponentiation operator",
+          "name": "keyword.operator.arithmetic.sysml",
+          "match": "\\*\\*"
+        },
+        {
+          "comment": "Strict equality / inequality operators",
+          "name": "keyword.operator.comparison.sysml",
+          "match": "===|!=="
+        },
+        {
+          "comment": "Equality / inequality operators",
+          "name": "keyword.operator.comparison.sysml",
+          "match": "==|!="
+        },
+        {
+          "comment": "Meta access operator",
+          "name": "keyword.operator.meta.sysml",
+          "match": "@@"
+        },
+        {
+          "comment": "Assignment operator",
+          "name": "keyword.operator.assignment.sysml",
+          "match": ":="
+        },
+        {
+          "comment": "Range operator",
+          "name": "keyword.operator.range.sysml",
+          "match": "\\.\\."
+        },
+        {
+          "comment": "Null-safe navigation operator",
+          "name": "keyword.operator.optional.sysml",
+          "match": "\\.\\?"
+        },
+        {
+          "comment": "Null coalescing operator",
+          "name": "keyword.operator.null-coalescing.sysml",
+          "match": "\\?\\?"
+        },
+        {
+          "comment": "Comparison operators",
+          "name": "keyword.operator.comparison.sysml",
+          "match": "<=|>="
+        },
+        {
+          "comment": "Assignment operator (single =)",
+          "name": "keyword.operator.assignment.sysml",
+          "match": "(?<!=|!)=(?!=|>)"
+        },
+        {
+          "comment": "Less-than / greater-than",
+          "name": "keyword.operator.comparison.sysml",
+          "match": "<|>"
+        },
+        {
+          "comment": "Arithmetic operators",
+          "name": "keyword.operator.arithmetic.sysml",
+          "match": "[+\\-*/%^]"
+        },
+        {
+          "comment": "Bitwise and special operators",
+          "name": "keyword.operator.bitwise.sysml",
+          "match": "[~|&#$]"
+        }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.section.braces.begin.sysml",
+          "match": "\\{"
+        },
+        {
+          "name": "punctuation.section.braces.end.sysml",
+          "match": "\\}"
+        },
+        {
+          "name": "punctuation.section.parens.begin.sysml",
+          "match": "\\("
+        },
+        {
+          "name": "punctuation.section.parens.end.sysml",
+          "match": "\\)"
+        },
+        {
+          "name": "punctuation.section.brackets.begin.sysml",
+          "match": "\\["
+        },
+        {
+          "name": "punctuation.section.brackets.end.sysml",
+          "match": "\\]"
+        },
+        {
+          "name": "punctuation.separator.semicolon.sysml",
+          "match": ";"
+        },
+        {
+          "name": "punctuation.separator.comma.sysml",
+          "match": ","
+        },
+        {
+          "name": "punctuation.separator.namespace.sysml",
+          "match": "::"
+        },
+        {
+          "name": "punctuation.separator.colon.sysml",
+          "match": ":"
+        },
+        {
+          "name": "punctuation.definition.annotation.sysml",
+          "match": "@"
+        },
+        {
+          "name": "punctuation.accessor.dot.sysml",
+          "match": "\\."
+        }
+      ]
+    }
+  }
+}
