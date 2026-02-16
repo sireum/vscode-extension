@@ -1,3 +1,0 @@
-[submodule "vscode-test"]
-	path = vscode-test
-	url = https://github.com/santoslab/sysmlv2-models.git
