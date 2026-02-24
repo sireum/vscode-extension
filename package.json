@@ -58,18 +58,6 @@
           ".sl"
         ],
         "configuration": "./language-configuration-slang.json"
-      },
-      {
-        "id": "sysml",
-        "aliases": [
-          "SysML v2",
-          "SysML",
-          "sysml"
-        ],
-        "extensions": [
-          ".sysml"
-        ],
-        "configuration": "./language-configuration-sysml.json"
       }
     ],
     "grammars": [
@@ -77,11 +65,6 @@
         "language": "slang",
         "scopeName": "source.slang",
         "path": "./syntaxes/slang.tmLanguage.json"
-      },
-      {
-        "language": "sysml",
-        "scopeName": "source.sysml",
-        "path": "./syntaxes/sysml.tmLanguage.json"
       }
     ],
     "commands": [
