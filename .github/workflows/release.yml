@@ -1,0 +1,58 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' &&
+       contains(github.event.head_commit.message, '[release]'))
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Compute version and patch package.json
+        id: version
+        run: |
+          # Match build.cmd: git log -n 1 --date=format:%Y%m%d --pretty=format:4.%cd.%h
+          SHORT_HASH=$(git log -n 1 --date=format:%Y%m%d --pretty=format:%h)
+          DATE=$(git log -n 1 --date=format:%Y%m%d --pretty=format:%cd)
+          TAG="4.${DATE}.${SHORT_HASH}"
+          # Convert hex short hash to decimal (matches: Z(s"0x${vs(2)}").get)
+          DECIMAL=$(printf '%d' "0x${SHORT_HASH}")
+          VSCE_VERSION="4.${DATE}.${DECIMAL}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          # Patch package.json version and description commit hash
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.version = '${VSCE_VERSION}';
+            pkg.description = pkg.description.replace(/Commit: [^.]*\./, 'Commit: ${SHORT_HASH}.');
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+      - name: Package VSIX
+        run: |
+          npm install -g @vscode/vsce
+          vsce package -o sireum-vscode-extension.vsix
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          files: sireum-vscode-extension.vsix
+          make_latest: true

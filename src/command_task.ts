@@ -1011,6 +1011,12 @@ async function getSireum(): Promise<string | undefined> {
 }
 
 
+export async function getSireumHome(): Promise<string | undefined> {
+  const sireum = await getSireum();
+  if (!sireum) return undefined;
+  return pathJs.dirname(pathJs.dirname(sireum.slice(1, -1)));
+}
+
 export async function importBuild(path: string, force: boolean): Promise<string[] | undefined> {
   const sireum = await getSireum();
   if (!sireum) {

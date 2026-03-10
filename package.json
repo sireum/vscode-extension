@@ -1,8 +1,8 @@
 {
   "name": "vscode-extension",
   "displayName": "Sireum",
-  "description": "This extension provides integration of various Sireum tools/frameworks. Commit: v0.0.0.",
-  "version": "0.0.0",
+  "description": "This extension provides integration of various Sireum tools/frameworks. Commit: 1eb3467.",
+  "version": "4.20260224.32191591",
   "publisher": "sireum",
   "icon": "images/sireum.png",
   "private": true,
@@ -58,6 +58,26 @@
           ".sl"
         ],
         "configuration": "./language-configuration-slang.json"
+      },
+      {
+        "id": "sysml",
+        "aliases": [
+          "SysML"
+        ],
+        "extensions": [
+          ".sysml"
+        ],
+        "configuration": "./language-configuration-sysml.json"
+      },
+      {
+        "id": "kerml",
+        "aliases": [
+          "KerML"
+        ],
+        "extensions": [
+          ".kerml"
+        ],
+        "configuration": "./language-configuration-sysml.json"
       }
     ],
     "grammars": [
@@ -65,6 +85,16 @@
         "language": "slang",
         "scopeName": "source.slang",
         "path": "./syntaxes/slang.tmLanguage.json"
+      },
+      {
+        "language": "sysml",
+        "scopeName": "source.sysml",
+        "path": "./syntaxes/sysml.tmLanguage.json"
+      },
+      {
+        "language": "kerml",
+        "scopeName": "source.kerml",
+        "path": "./syntaxes/sysml.tmLanguage.json"
       }
     ],
     "commands": [
@@ -392,19 +422,21 @@
   "scripts": {
     "prebuild": "npm install",
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --sourcemap --banner:js=\"const import_meta_url = require('url').pathToFileURL(__filename).href;\" --define:import.meta.url=import_meta_url",
     "lint": "eslint \"src/**/*.ts\"",
-    "watch": "tsc -watch -p ./"
+    "watch": "esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --sourcemap --watch --banner:js=\"const import_meta_url = require('url').pathToFileURL(__filename).href;\" --define:import.meta.url=import_meta_url"
   },
   "dependencies": {
     "tmp": "^0.2.5",
-    "antlr4": "^4.13.2"
+    "antlr4": "^4.13.2",
+    "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
     "@types/node": "^25.2.2",
     "@types/vscode": "^1.92.2",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
     "@typescript-eslint/parser": "^8.54.0",
+    "esbuild": "^0.25.0",
     "eslint": "^9.39.2",
     "typescript": "^5.9.3"
   }

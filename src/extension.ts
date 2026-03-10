@@ -25,6 +25,9 @@
 import * as vscode from "vscode";
 import * as ct from "./command_task";
 import * as slangLl2 from "./slang_ll2";
+import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
+import * as path from "path";
+import * as fs from "fs";
 
 export async function activate(context: vscode.ExtensionContext) {
   const listener = (e: vscode.TextDocument) => {
@@ -76,6 +79,9 @@ export async function activate(context: vscode.ExtensionContext) {
   vscode.tasks.onDidEndTaskProcess((e) =>
     ctMap.get(e.execution.task.name)?.post(context, e),
   );
+  // Start SysML LSP server if the JAR exists
+  startSysmlLsp(context);
+
   ct.commands.forEach((c) => {
     context.subscriptions.push(
       vscode.commands.registerCommand(c.commandId(), () =>
@@ -125,6 +131,134 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 
-export function deactivate(context: vscode.ExtensionContext) {
+let sysmlClient: LanguageClient | undefined;
+
+function findAnnotationBodyRanges(document: vscode.TextDocument): vscode.Range[] {
+  const text = document.getText();
+  const ranges: vscode.Range[] = [];
+  let idx = 0;
+  while (idx < text.length) {
+    const start = text.indexOf("/*{", idx);
+    if (start === -1) break;
+    const end = text.indexOf("}*/", start + 3);
+    if (end === -1) break;
+    ranges.push(new vscode.Range(
+      document.positionAt(start),
+      document.positionAt(end + 3),
+    ));
+    idx = end + 3;
+  }
+  return ranges;
+}
+
+function filterAnnotationBodyTokens(
+  document: vscode.TextDocument,
+  tokens: vscode.SemanticTokens,
+): vscode.SemanticTokens {
+  const ranges = findAnnotationBodyRanges(document);
+  if (ranges.length === 0) return tokens;
+
+  const data = tokens.data;
+  const filtered: number[] = [];
+  let prevLine = 0, prevChar = 0;
+  let filtPrevLine = 0, filtPrevChar = 0;
+
+  for (let i = 0; i < data.length; i += 5) {
+    const dLine = data[i], dChar = data[i + 1], len = data[i + 2];
+    const line = prevLine + dLine;
+    const char = dLine === 0 ? prevChar + dChar : dChar;
+    prevLine = line;
+    prevChar = char;
+
+    const pos = new vscode.Position(line, char);
+    let skip = false;
+    for (const r of ranges) {
+      if (r.contains(pos)) { skip = true; break; }
+    }
+    if (skip) continue;
+
+    const newDLine = line - filtPrevLine;
+    const newDChar = newDLine === 0 ? char - filtPrevChar : char;
+    filtered.push(newDLine, newDChar, len, data[i + 3], data[i + 4]);
+    filtPrevLine = line;
+    filtPrevChar = char;
+  }
+
+  return new vscode.SemanticTokens(new Uint32Array(filtered), tokens.resultId);
+}
+
+async function startSysmlLsp(context: vscode.ExtensionContext) {
+  const outputChannel = vscode.window.createOutputChannel("SysML LSP");
+
+  try {
+    const sireumHome = vscode.workspace.getConfiguration("sireum").get<string>("home");
+    if (!sireumHome) {
+      outputChannel.appendLine("sireum.home not configured, SysML LSP not started.");
+      return;
+    }
+    outputChannel.appendLine(`Sireum home: ${sireumHome}`);
+
+    const lspJar = path.join(sireumHome, "lib", "sysml-lsp-server.jar");
+    if (!fs.existsSync(lspJar)) {
+      outputChannel.appendLine(`SysML LSP JAR not found: ${lspJar}`);
+      return;
+    }
+
+    const platform = process.platform === "win32" ? "win" :
+      process.platform === "darwin" ? "mac" : "linux";
+    const javaCmd = path.join(sireumHome, "bin", platform, "java", "bin", "java");
+    if (!fs.existsSync(javaCmd)) {
+      outputChannel.appendLine(`Java not found: ${javaCmd}`);
+      return;
+    }
+
+    const sysmlLib = path.join(sireumHome, "lib", "sysml.library");
+    const hasLib = fs.existsSync(sysmlLib);
+    outputChannel.appendLine(`SysML standard library: ${hasLib ? sysmlLib : "not found"}`);
+
+    outputChannel.appendLine(`Starting SysML LSP: ${javaCmd} -jar ${lspJar}`);
+
+    const serverOptions: ServerOptions = {
+      command: javaCmd,
+      args: hasLib ? ["-jar", lspJar, "--library", sysmlLib] : ["-jar", lspJar],
+    };
+
+    const clientOptions: LanguageClientOptions = {
+      documentSelector: [
+        { scheme: "file", language: "sysml" },
+        { scheme: "file", language: "kerml" },
+      ],
+      outputChannel,
+      middleware: {
+        provideDocumentSemanticTokens: async (document, token, next) => {
+          const result = await next(document, token);
+          if (!result || result.data.length === 0) return null;
+          return filterAnnotationBodyTokens(document, result);
+        },
+        provideDocumentSemanticTokensEdits: async (document, previousResultId, token, next) => {
+          const result = await next(document, previousResultId, token);
+          if (!result) return null;
+          if ("data" in result) {
+            const tokens = result as vscode.SemanticTokens;
+            if (tokens.data.length === 0) return null;
+            return filterAnnotationBodyTokens(document, tokens);
+          }
+          return null;
+        },
+      },
+    };
+
+    sysmlClient = new LanguageClient("sysml-lsp", "SysML LSP", serverOptions, clientOptions);
+    await sysmlClient.start();
+    outputChannel.appendLine("SysML LSP started successfully.");
+  } catch (e) {
+    outputChannel.appendLine(`SysML LSP failed to start: ${e}`);
+  }
+}
+
+export async function deactivate() {
   ct.deinit();
+  if (sysmlClient) {
+    await sysmlClient.stop();
+  }
 }

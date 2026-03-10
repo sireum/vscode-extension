@@ -4,9 +4,9 @@
 .vscode-test/**
 *.iml
 bin
+node_modules/**
 out/vscode-test/**
 out/logika/**
-out/**/*.map
 readme-dev.md
 src/**
 tsconfig.json
