@@ -1,8 +1,8 @@
 {
   "name": "vscode-extension",
   "displayName": "Sireum",
-  "description": "This extension provides integration of various Sireum tools/frameworks. Commit: 1eb3467.",
-  "version": "4.20260224.32191591",
+  "description": "This extension provides integration of various Sireum tools/frameworks. Commit: v0.0.0.",
+  "version": "0.0.0",
   "publisher": "sireum",
   "icon": "images/sireum.png",
   "private": true,
