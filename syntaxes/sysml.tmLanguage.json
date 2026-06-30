@@ -130,7 +130,17 @@
         {
           "comment": "GUMBO keywords",
           "name": "keyword.other.gumbo.sysml",
-          "match": "\\b(invariants|inv|integration|initialize|compute|compute_cases|infoflow|handle|guarantee|functions|mut|invariant|reads|modifies)\\b"
+          "match": "\\b(invariants|inv|integration|initialize|compute|compute_cases|composition|components|ports|schema|label|split|sequence|infoflow|handle|guarantee|functions|mut|invariant|reads|modifies)\\b"
+        },
+        {
+          "comment": "GUMBO keywords: 'Import and dependency keywords' additions",
+          "name": "keyword.control.import.sysml",
+          "match": "\\b(before)\\b"
+        },
+        {
+          "comment": "GUMBO keywords: 'Type definition keywords' additions",
+          "name": "keyword.declaration.type.sysml",
+          "match": "\\b(property)\\b"
         },
         {
           "comment": "GUMBO annotation keywords",
